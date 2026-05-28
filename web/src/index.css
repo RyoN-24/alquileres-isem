@@ -1,36 +1,40 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+
 :root {
-  --bg: #050706;
-  --surface: #101310;
-  --surface-raised: #151a15;
-  --surface-strong: #1b211b;
-  --field: #0b0e0c;
-  --text: #f4f7f1;
-  --muted: #9aa39a;
-  --border: #293229;
-  --border-strong: #3b463a;
-  --brand: #b7ff00;
-  --brand-ink: #101800;
-  --brand-soft: rgba(183, 255, 0, 0.12);
-  --nav-bg: #080a08;
-  --nav-text: #f4f7f1;
-  --nav-muted: #8e988d;
-  --nav-active: #182116;
-  --danger: #ff5b57;
-  --warning: #ffcc4d;
-  --success: #7ddc82;
-  --info: #5cc8ff;
-  --focus: #d4ff59;
-  --soft-blue: rgba(92, 200, 255, 0.13);
-  --soft-red: rgba(255, 91, 87, 0.14);
-  --soft-gold: rgba(255, 204, 77, 0.14);
-  --soft-green: rgba(125, 220, 130, 0.14);
-  --chart-teal: #27d4b1;
-  --chart-gold: #ffcc4d;
-  --chart-red: #ff766f;
-  --shadow-soft: 0 18px 60px rgba(0, 0, 0, 0.42);
-  --shadow-tight: 0 10px 28px rgba(0, 0, 0, 0.34);
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-raised: #f9fbfd;
+  --surface-strong: #e7eef6;
+  --field: #ffffff;
+  --text: #17212f;
+  --muted: #637083;
+  --border: #d9e2ec;
+  --border-strong: #aebdce;
+  --brand: #0f4c81;
+  --brand-ink: #ffffff;
+  --brand-soft: rgba(15, 76, 129, 0.12);
+  --accent: #00a6a6;
+  --accent-soft: rgba(0, 166, 166, 0.13);
+  --nav-bg: #08111f;
+  --nav-text: #f7fbff;
+  --nav-muted: #9ba8ba;
+  --nav-active: #13243a;
+  --danger: #b23a32;
+  --warning: #b7791f;
+  --success: #247a52;
+  --info: #2768b2;
+  --focus: #00a6a6;
+  --soft-blue: rgba(39, 104, 178, 0.12);
+  --soft-red: rgba(178, 58, 50, 0.12);
+  --soft-gold: rgba(183, 121, 31, 0.14);
+  --soft-green: rgba(36, 122, 82, 0.12);
+  --chart-teal: #00a6a6;
+  --chart-gold: #c88719;
+  --chart-red: #b23a32;
+  --shadow-soft: 0 24px 70px rgba(8, 17, 31, 0.18);
+  --shadow-tight: 0 14px 36px rgba(8, 17, 31, 0.09);
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "IBM Plex Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   color: var(--text);
   background: var(--bg);
@@ -48,7 +52,11 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: var(--bg);
+  background:
+    linear-gradient(90deg, rgba(217, 226, 236, 0.55) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(217, 226, 236, 0.45) 1px, transparent 1px),
+    var(--bg);
+  background-size: 48px 48px;
 }
 
 button,

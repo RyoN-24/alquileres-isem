@@ -1,7 +1,6 @@
 import {
   AlertTriangle,
   BadgeDollarSign,
-  BarChart3,
   Bell,
   Building2,
   CalendarClock,
@@ -10,11 +9,18 @@ import {
   FileBarChart,
   FileText,
   FolderOpen,
+  Eye,
+  EyeOff,
   LayoutDashboard,
+  Lock,
+  LogIn,
+  Mail,
   Menu,
   Plus,
   Search,
+  Server,
   Settings,
+  ShieldCheck,
   Truck,
   Users,
   Wrench,
@@ -279,12 +285,6 @@ const invoices: Invoice[] = [
   },
 ]
 
-const monthlySpend = [
-  { supplier: 'Maq. Andinas', amount: 14640, color: 'var(--chart-teal)' },
-  { supplier: 'Transp. Sur', amount: 4260, color: 'var(--chart-gold)' },
-  { supplier: 'Palomino', amount: 1800, color: 'var(--chart-red)' },
-]
-
 const money = (value: number, currency: Currency) =>
   new Intl.NumberFormat('es-PE', {
     style: 'currency',
@@ -339,6 +339,29 @@ function App() {
   const [invoiceLoadError, setInvoiceLoadError] = useState('')
   const [userLoadError, setUserLoadError] = useState('')
 
+  const resetSession = () => {
+    localStorage.removeItem('isem_token')
+    localStorage.removeItem('isem_user')
+    setToken('')
+    setUser(null)
+    setApiSuppliers([])
+    setApiEquipment([])
+    setApiContracts([])
+    setApiValuations([])
+    setApiInvoices([])
+    setApiUsers([])
+    setDashboardSummary(null)
+    setDueInvoicesReport(null)
+    setCostSummaryReport(null)
+    setAlertSettings(null)
+    setContractTemplate(null)
+    setSearchResults(null)
+    setSelectedSupplierId(null)
+  }
+
+  const isSessionError = (error: unknown) =>
+    error instanceof Error && error.message.toLowerCase().includes('sesion invalida')
+
   const loadSuppliers = async (authToken = token) => {
     if (!authToken) return
     try {
@@ -346,6 +369,10 @@ function App() {
       const result = await listSuppliers(authToken)
       setApiSuppliers(result.data)
     } catch (error) {
+      if (isSessionError(error)) {
+        resetSession()
+        return
+      }
       setSupplierLoadError(error instanceof Error ? error.message : 'No se pudieron cargar proveedores')
     }
   }
@@ -363,6 +390,10 @@ function App() {
       setEquipmentTypes(typeResult.data)
       setSites(siteResult.data)
     } catch (error) {
+      if (isSessionError(error)) {
+        resetSession()
+        return
+      }
       setEquipmentLoadError(error instanceof Error ? error.message : 'No se pudieron cargar equipos')
     }
   }
@@ -374,6 +405,10 @@ function App() {
       const result = await listContracts(authToken)
       setApiContracts(result.data)
     } catch (error) {
+      if (isSessionError(error)) {
+        resetSession()
+        return
+      }
       setContractLoadError(error instanceof Error ? error.message : 'No se pudieron cargar contratos')
     }
   }
@@ -385,6 +420,10 @@ function App() {
       const result = await listValuations(authToken)
       setApiValuations(result.data)
     } catch (error) {
+      if (isSessionError(error)) {
+        resetSession()
+        return
+      }
       setValuationLoadError(error instanceof Error ? error.message : 'No se pudieron cargar valorizaciones')
     }
   }
@@ -396,34 +435,58 @@ function App() {
       const result = await listInvoices(authToken)
       setApiInvoices(result.data)
     } catch (error) {
+      if (isSessionError(error)) {
+        resetSession()
+        return
+      }
       setInvoiceLoadError(error instanceof Error ? error.message : 'No se pudieron cargar facturas')
     }
   }
 
   const loadDashboard = async (authToken = token) => {
     if (!authToken) return
-    const summary = await getDashboardSummary(authToken)
-    setDashboardSummary(summary)
+    try {
+      const summary = await getDashboardSummary(authToken)
+      setDashboardSummary(summary)
+    } catch (error) {
+      if (isSessionError(error)) resetSession()
+    }
   }
 
   const loadReport = async (authToken = token) => {
     if (!authToken) return
-    setDueInvoicesReport(await getDueInvoicesReport(authToken))
+    try {
+      setDueInvoicesReport(await getDueInvoicesReport(authToken))
+    } catch (error) {
+      if (isSessionError(error)) resetSession()
+    }
   }
 
   const loadCostSummaryReport = async (authToken = token) => {
     if (!authToken) return
-    setCostSummaryReport(await getCostSummaryReport(authToken))
+    try {
+      setCostSummaryReport(await getCostSummaryReport(authToken))
+    } catch (error) {
+      if (isSessionError(error)) resetSession()
+    }
   }
 
   const loadAlertSettings = async (authToken = token) => {
     if (!authToken) return
-    setAlertSettings(await getAlertSettings(authToken))
+    try {
+      setAlertSettings(await getAlertSettings(authToken))
+    } catch (error) {
+      if (isSessionError(error)) resetSession()
+    }
   }
 
   const loadContractTemplate = async (authToken = token) => {
     if (!authToken) return
-    setContractTemplate(await getContractTemplate(authToken))
+    try {
+      setContractTemplate(await getContractTemplate(authToken))
+    } catch (error) {
+      if (isSessionError(error)) resetSession()
+    }
   }
 
   const loadUsers = async (authToken = token) => {
@@ -433,6 +496,10 @@ function App() {
       const result = await listUsers(authToken)
       setApiUsers(result.data)
     } catch (error) {
+      if (isSessionError(error)) {
+        resetSession()
+        return
+      }
       setUserLoadError(error instanceof Error ? error.message : 'No se pudieron cargar usuarios')
     }
   }
@@ -498,23 +565,7 @@ function App() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('isem_token')
-    localStorage.removeItem('isem_user')
-    setToken('')
-    setUser(null)
-    setApiSuppliers([])
-    setApiEquipment([])
-    setApiContracts([])
-    setApiValuations([])
-    setApiInvoices([])
-    setApiUsers([])
-    setDashboardSummary(null)
-    setDueInvoicesReport(null)
-    setCostSummaryReport(null)
-    setAlertSettings(null)
-    setContractTemplate(null)
-    setSearchResults(null)
-    setSelectedSupplierId(null)
+    resetSession()
   }
 
   const handleCreateSupplier = async (input: CreateSupplierInput) => {
@@ -1333,6 +1384,35 @@ function Dashboard({
   const pendingUsd = summary?.pendingInvoices.USD ?? dashboard.pendingUsd
   const dueSoon = summary?.dueSoonInvoices ?? dashboard.dueSoon
   const overdue = summary?.overdueInvoices ?? dashboard.overdue
+  const [activeCurrency, setActiveCurrency] = useState<Currency>('PEN')
+  const [hoveredSupplier, setHoveredSupplier] = useState<string | null>(null)
+  const chartData = useMemo(() => {
+    const currentMonth = new Date().toISOString().slice(0, 7)
+    const totals = new Map<string, number>()
+    invoices
+      .filter(
+        (invoice) =>
+          invoice.currency === activeCurrency &&
+          invoice.status !== 'ANULADA' &&
+          invoice.issueDate.slice(0, 7) === currentMonth,
+      )
+      .forEach((invoice) => {
+        const supplierName = invoice.supplier.businessName
+        totals.set(supplierName, (totals.get(supplierName) ?? 0) + Number(invoice.totalAmount))
+      })
+
+    const rows = Array.from(totals.entries())
+      .map(([supplier, amount]) => ({ supplier, amount }))
+      .sort((first, second) => second.amount - first.amount)
+      .slice(0, 6)
+
+    return rows.length > 0
+      ? rows
+      : [
+          { supplier: 'Sin facturas registradas', amount: 0 },
+        ]
+  }, [activeCurrency, invoices])
+  const maxChartAmount = Math.max(...chartData.map((item) => item.amount), 1)
 
   return (
     <div className="dashboard-grid">
@@ -1428,23 +1508,48 @@ function Dashboard({
         <div className="section-heading">
           <div>
             <h2>Gasto mensual por proveedor</h2>
-            <p>Montos de muestra para validar lectura ejecutiva.</p>
+            <p>Facturas emitidas este mes, separadas por moneda.</p>
           </div>
-          <BarChart3 size={20} aria-hidden="true" />
+          <div className="segmented-control" aria-label="Moneda del grafico">
+            {(['PEN', 'USD'] as Currency[]).map((currency) => (
+              <button
+                key={currency}
+                type="button"
+                className={activeCurrency === currency ? 'active' : ''}
+                onClick={() => setActiveCurrency(currency)}
+              >
+                {currency}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="bar-list">
-          {monthlySpend.map((item) => (
-            <div key={item.supplier} className="bar-row">
-              <span>{item.supplier}</span>
-              <div className="bar-track">
-                <div
-                  className="bar-fill"
-                  style={{ width: `${Math.max(14, (item.amount / 14640) * 100)}%`, background: item.color }}
+        <div className="financial-chart" role="img" aria-label="Gasto por proveedor">
+          {chartData.map((item, index) => {
+            const height = item.amount > 0 ? Math.max(18, (item.amount / maxChartAmount) * 100) : 8
+            const isActive = hoveredSupplier === item.supplier
+            return (
+              <button
+                key={item.supplier}
+                type="button"
+                className={isActive ? 'chart-column active' : 'chart-column'}
+                onMouseEnter={() => setHoveredSupplier(item.supplier)}
+                onMouseLeave={() => setHoveredSupplier(null)}
+                onFocus={() => setHoveredSupplier(item.supplier)}
+                onBlur={() => setHoveredSupplier(null)}
+                aria-label={`${item.supplier}: ${money(item.amount, activeCurrency)}`}
+              >
+                <span className="chart-value">{money(item.amount, activeCurrency)}</span>
+                <span
+                  className="chart-bar"
+                  style={{
+                    height: `${height}%`,
+                    transitionDelay: `${index * 35}ms`,
+                  }}
                 />
-              </div>
-              <strong>{money(item.amount, 'PEN')}</strong>
-            </div>
-          ))}
+                <span className="chart-label">{item.supplier}</span>
+              </button>
+            )
+          })}
         </div>
       </section>
 
@@ -1913,6 +2018,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, user: AuthUser) => 
   const [password, setPassword] = useState('Admin12345!')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -1930,34 +2036,71 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, user: AuthUser) => 
 
   return (
     <main className="login-page">
+      <div className="login-backdrop" aria-hidden="true" />
+      <div className="login-status-stack" aria-hidden="true">
+        <span>
+          <Server size={14} />
+          Servidor local operativo
+        </span>
+        <span>
+          <ShieldCheck size={14} />
+          Conexion segura
+        </span>
+      </div>
       <section className="login-panel">
-        <div className="brand login-brand">
-          <div className="brand-mark">
-            <img src="/brand/isem-logo.png" alt="" aria-hidden="true" />
+        <div className="login-brand">
+          <div className="login-logo-frame">
+            <img src="/brand/isem-logo.png" alt="ISEM" />
           </div>
           <div>
-            <strong>ISEM</strong>
-            <span>Control de alquileres</span>
+            <p className="eyebrow">INDUSTRIAS Y SERVICIOS ELECTRO-MECANICOS SRL</p>
+            <h1>Acceso Corporativo</h1>
+            <span>Control de alquileres, valorizaciones y facturas</span>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="login-form">
-          <label>
-            Correo
-            <input value={email} onChange={(event) => setEmail(event.target.value)} />
+          <label className="field-with-icon">
+            Usuario / correo
+            <span>
+              <Mail size={17} aria-hidden="true" />
+              <input
+                type="email"
+                value={email}
+                autoComplete="username"
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </span>
           </label>
-          <label>
+          <label className="field-with-icon">
             Contrasena
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <span>
+              <Lock size={17} aria-hidden="true" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                autoComplete="current-password"
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </span>
           </label>
           {error && <div className="inline-alert">{error}</div>}
           <button type="submit" className="primary-button" disabled={isSubmitting}>
-            {isSubmitting ? 'Ingresando...' : 'Ingresar'}
+            {isSubmitting ? 'Verificando...' : 'Iniciar sesion'}
+            {!isSubmitting && <LogIn size={17} aria-hidden="true" />}
           </button>
         </form>
+        <footer className="login-footer">
+          <span>RUC 20220199968</span>
+          <span>America/Lima</span>
+        </footer>
       </section>
     </main>
   )
