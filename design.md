@@ -2,323 +2,388 @@
 
 ## 1. Contexto del Producto
 
-Alquileres ISEM es una plataforma web responsive para INDUSTRIAS Y SERVICIOS ELECTRO-MECANICOS SRL, empresa peruana que controla servicios de alquiler de maquinaria, equipos y vehiculos provistos por terceros.
+Alquileres ISEM es una plataforma web responsive para INDUSTRIAS Y SERVICIOS ELECTRO-MECANICOS SRL, empresa peruana que controla alquileres de maquinaria, equipos y vehiculos provistos por proveedores externos.
 
-La aplicacion no debe parecer una maqueta estatica, una landing page ni un dashboard generico generado por IA. Debe sentirse como una herramienta real de trabajo diario para controlar proveedores, contratos, equipos, valorizaciones, facturas, vencimientos de pago, documentos adjuntos y carpetas reales.
+La aplicacion centraliza proveedores, contratos, equipos, valorizaciones, facturas, alertas de vencimiento, comprobantes de pago, documentos adjuntos y carpetas documentales reales.
 
-El usuario principal necesita ahorrar tiempo. Actualmente revisar pagos, vencimientos y documentos proveedor por proveedor es pesado y disperso. La app debe convertir ese trabajo en una bandeja operativa clara, rapida y confiable.
+El producto debe ahorrar tiempo. Actualmente el control manual por Excel o por proveedor genera trabajo repetitivo, riesgo de olvido y poca visibilidad sobre pagos proximos. La interfaz debe convertir esa informacion dispersa en una bandeja de control clara, segura y accionable.
 
-## 2. Objetivo Principal del Diseno
+No disenar una landing page. No disenar una maqueta estatica. No disenar un dashboard generico de IA. Disenar una herramienta real de gestion operativa y financiera.
 
-Disenar una plataforma moderna, funcional y visualmente madura que permita saber rapidamente:
+## 2. Objetivo del Diseno
 
-- Que facturas estan por vencer.
-- Que facturas ya vencieron.
-- Cuanto se debe pagar en PEN.
-- Cuanto se debe pagar en USD.
-- A que proveedor corresponde cada deuda.
-- Que contrato, valorizacion y equipo respaldan cada factura.
-- Que documentos faltan.
-- En que carpeta documental esta cada respaldo.
-- Que accion debe hacer el usuario ahora.
+Crear una aplicacion que transmita:
 
-El diseno debe transmitir control, precision, orden y confianza. Debe sentirse como un centro de mando financiero-operativo industrial, no como una plantilla SaaS comun.
-
-## 3. Personalidad Visual Deseada
-
-La direccion visual debe combinar:
-
-- Gestion financiera.
-- Operacion industrial.
+- Confianza.
+- Seguridad.
+- Tecnologia.
+- Jerarquia.
+- Orden.
+- Precision.
+- Control financiero.
 - Control documental.
-- Estetica moderna y premium.
-- Claridad para usuarios no tecnicos.
 
-Palabras clave:
+El usuario debe entender en pocos segundos:
 
-- Industrial.
-- Ejecutivo.
-- Tecnico.
-- Preciso.
-- Moderno.
-- Dinamico.
+- Cuanto debe pagar.
+- En que moneda debe pagar: PEN o USD.
+- Que facturas vencen pronto.
+- Que facturas ya vencieron.
+- Que proveedor esta asociado.
+- Que contrato y equipo respaldan la factura.
+- Que documentos faltan.
+- Donde esta la carpeta documental.
+- Que accion debe tomar ahora.
+
+El diseno debe sentirse como un centro de control financiero-operativo para una empresa tecnica, no como una plantilla SaaS comun.
+
+## 3. Cambio de Direccion Visual
+
+Olvidar la referencia visual anterior basada en negro y verde neon. La nueva direccion no debe depender de una captura especifica.
+
+La prioridad ahora es construir una identidad visual propia para ISEM:
+
+- Tecnologica.
+- Corporativa.
+- Segura.
+- Con jerarquia clara.
+- Profesional para uso diario.
+- Legible para usuarios administrativos y directivos.
+
+La interfaz puede usar sidebar oscuro y superficies claras, o una variante hibrida, pero no debe caer en el error de solo cambiar colores. El diseno debe replantear composicion, densidad, tipografia, estados, interacciones, ritmo visual y jerarquia.
+
+## 4. Paleta de Color Recomendada
+
+Direccion: Tecnologia Confiable.
+
+Esta paleta comunica seguridad y jerarquia mediante azul profundo, tecnologia mediante teal, y control operativo mediante estados sobrios.
+
+```css
+--bg-main: #F5F7FA;
+--surface: #FFFFFF;
+--surface-alt: #EEF2F6;
+--surface-strong: #E4EAF1;
+--border: #D8E0EA;
+
+--text-main: #101820;
+--text-secondary: #5E6B78;
+--text-soft: #8A96A3;
+
+--primary: #123C69;
+--primary-2: #0F5C8C;
+--primary-soft: #E3EEF7;
+
+--accent: #00A6A6;
+--accent-soft: #DDF7F5;
+
+--success: #2E7D52;
+--warning: #C88719;
+--danger: #B23A32;
+--info: #3267C8;
+
+--sidebar: #0B1220;
+--sidebar-active: #17233A;
+--sidebar-text: #F8FAFC;
+--sidebar-muted: #AAB6C5;
+```
+
+## 5. Uso de la Paleta
+
+### Azul profundo
+
+Usar `#123C69` como color principal. Debe comunicar confianza, seguridad, estabilidad y autoridad.
+
+Usos:
+
+- Botones primarios.
+- Estados activos importantes.
+- Titulos o indicadores clave.
+- Sidebar accents.
+- Iconos principales.
+
+### Azul tecnologia
+
+Usar `#0F5C8C` como apoyo para elementos tecnologicos o de navegacion.
+
+Usos:
+
+- Hover.
+- Enlaces.
+- Borde activo.
+- Graficos secundarios.
+
+### Teal tecnologico
+
+Usar `#00A6A6` como acento de modernidad, no como color dominante.
+
+Usos:
+
+- Indicadores de sistema.
+- Confirmaciones menores.
+- Elementos interactivos.
+- Chips informativos.
+- Detalles tecnologicos.
+
+### Fondo claro
+
+Usar `#F5F7FA` como fondo general para mejorar legibilidad y confianza.
+
+La app no debe sentirse pesada ni oscura por completo. El producto es de uso diario y debe ser facil de leer.
+
+### Sidebar oscuro
+
+Usar `#0B1220` para sidebar y zonas de estructura. Esto aporta jerarquia, tecnologia y presencia corporativa.
+
+### Estados
+
+Los estados deben ser sobrios y claros:
+
+- Pagado / activo: `#2E7D52`.
+- Por vencer / advertencia: `#C88719`.
+- Vencido / error: `#B23A32`.
+- Informativo / documento: `#3267C8`.
+
+Los colores de estado nunca deben ser el unico indicador. Agregar texto, icono y/o marcador visual.
+
+## 6. Tipografia Recomendada
+
+La tipografia debe comunicar precision, tecnologia y confianza. Evitar fuentes demasiado redondeadas, decorativas o con personalidad excesivamente amigable.
+
+### Opcion principal recomendada
+
+```text
+IBM Plex Sans
+```
+
+Por que:
+
+- Tiene caracter tecnico.
+- Se siente institucional.
+- Funciona bien en tablas y formularios.
+- Comunica ingenieria y sistema serio.
+
+### Opcion alternativa
+
+```text
+Inter
+```
+
+Por que:
+
+- Muy legible.
+- Excelente para dashboards.
+- Moderna y limpia.
+- Buena para interfaces con mucha informacion.
+
+### Recomendacion final
+
+Usar:
+
+```text
+IBM Plex Sans como tipografia principal.
+Inter como alternativa para numeros o si se prefiere una implementacion mas simple.
+```
+
+Si solo se implementa una familia, usar IBM Plex Sans.
+
+## 7. Jerarquia Tipografica
+
+La jerarquia no debe depender solo del tamano. Debe usar posicion, peso, color, agrupacion, iconografia y espaciado.
+
+Escala recomendada:
+
+```css
+Pantalla / H1: 24-28px, weight 700
+Seccion / H2: 18-20px, weight 700
+Bloque / H3: 15-16px, weight 700
+Body: 14px, weight 400/500
+Tabla: 13px, weight 400/500
+Labels: 12px, weight 600
+Montos importantes: 28-34px, weight 700
+Badges: 11-12px, weight 700
+```
+
+Reglas:
+
+- Montos PEN/USD deben tener jerarquia fuerte.
+- Tablas deben mantenerse densas y legibles.
+- No usar titulos gigantes sin funcion.
+- No usar marketing copy.
+- Los encabezados deben ser claros y operativos.
+
+## 8. Personalidad Visual
+
+La interfaz debe sentirse:
+
+- Corporativa.
+- Tecnologica.
+- Segura.
+- Ejecutiva.
+- Ordenada.
 - Confiable.
-- Operativo.
-- Premium sin ser decorativo.
+- Moderna.
+- Con jerarquia.
+- Diseñada para trabajo real.
 
-Evitar que la interfaz se sienta:
+No debe sentirse:
 
 - Generica.
 - Hecha por IA.
-- Estatica.
+- Como fintech decorativa.
+- Como ERP antiguo.
 - Como landing page.
-- Como plantilla de dashboard sin alma.
-- Como app con cards repetidas sin jerarquia.
-- Como UI oscura aplicada superficialmente.
+- Como dashboard de tarjetas repetidas.
+- Como interfaz estatica.
 
-## 4. Aprendizajes del Diseno Actual
-
-El diseno actual ya tiene funcionalidad, pero visualmente no es suficiente. Cambiar colores a oscuro no resolvio el problema. El nuevo diseno debe replantear composicion, jerarquia, ritmo visual, distribucion de informacion, microinteracciones y personalidad.
-
-No basta con:
-
-- Cambiar fondo a negro.
-- Poner acento verde.
-- Agregar sombras.
-- Usar tarjetas iguales.
-- Cambiar botones.
-
-Se debe redisenar la experiencia como producto real: que cada pantalla tenga intencion, peso visual y flujo operativo.
-
-## 5. Principio Rector
-
-La aplicacion debe ser primero util y luego bonita. La estetica debe reforzar la utilidad.
-
-Cada elemento visual debe ayudar a responder una pregunta operativa:
-
-- Esto vence pronto?
-- Esta pagado?
-- Falta documento?
-- Que monto debo programar?
-- Es PEN o USD?
-- Que proveedor genera mas gasto?
-- Que carpeta debo abrir?
-- Que accion sigue?
-
-Si un elemento visual no ayuda a operar mejor, debe eliminarse.
-
-## 6. Identidad de ISEM
-
-Empresa:
-
-- INDUSTRIAS Y SERVICIOS ELECTRO-MECANICOS SRL.
-- RUC: 20220199968.
-- Peru.
-- Operaciones con multiples sedes.
-- Control de maquinaria, vehiculos, contratos, valorizaciones y facturas.
-
-El logo oficial de ISEM es geometrico, tecnico y angular. El diseno debe tomar inspiracion de esa identidad:
-
-- Lineas precisas.
-- Reticulas tecnicas.
-- Modulos bien alineados.
-- Bordes controlados.
-- Separaciones claras.
-- Sensacion electromecanica/industrial.
-
-El logo debe ser visible, pero no debe sentirse pegado artificialmente. Debe integrarse en la navegacion, login y posiblemente en encabezados documentales.
-
-## 7. Direcciones Visuales a Explorar
-
-Stitch debe proponer al menos 3 rutas visuales distintas, no una sola variacion de colores.
-
-### Ruta A - Centro de Control Industrial Operativo
-
-La mas recomendada.
-
-Debe parecer una cabina de control moderna para pagos, proveedores y documentos.
-
-Rasgos:
-
-- Dashboard denso pero ordenado.
-- Panel principal de vencimientos.
-- Sidebar sobrio.
-- Tablas con lectura rapida.
-- Modulos tipo expediente.
-- Alertas muy claras.
-- Estilo tecnico-industrial.
-- Uso medido de acento lima o verde electrico.
-
-### Ruta B - Financiero Premium Oscuro
-
-Inspirada parcialmente en apps fintech modernas, pero sin convertirse en landing.
-
-Rasgos:
-
-- Fondo oscuro sofisticado.
-- Paneles con profundidad suave.
-- Numeros financieros destacados.
-- Graficos limpios.
-- Microinteracciones visibles.
-- Sensacion premium.
-- Cuidado especial en contraste y legibilidad.
-
-### Ruta C - ERP Ejecutivo Hibrido
-
-Mas sobria y empresarial, pensada para usuarios mayores o administrativos.
-
-Rasgos:
-
-- Base clara o gris tecnico.
-- Sidebar oscuro.
-- Tablas muy legibles.
-- Menos dramatismo visual.
-- Mayor claridad en formularios.
-- Ideal para uso prolongado.
-
-## 8. Reglas Anti-Diseno IA
+## 9. Reglas Anti Diseno IA
 
 Evitar estrictamente:
 
 - Hero sections.
-- Fondos con blobs, orbes, bokeh o gradientes decorativos.
-- Cards iguales una tras otra sin jerarquia.
+- Gradientes decorativos.
+- Orbes, blobs, bokeh o fondos abstractos.
+- Cards repetidas sin intencion.
 - Iconos decorativos sin funcion.
-- Mucho espacio vacio sin razon.
-- Tipografia exageradamente grande dentro de herramientas operativas.
-- Dashboards con graficos falsos o decorativos.
-- Paleta morada/azul generica SaaS.
-- Componentes redondeados en exceso.
-- Sombras exageradas.
-- Copys tipo marketing.
-- Layouts que parezcan landing page.
-- Interfaces donde todo tiene el mismo peso visual.
+- Exceso de sombras.
+- Exceso de redondeo.
+- Paleta morada/azul SaaS generica.
+- Tipografia gigante sin proposito.
+- Mucho espacio vacio que reduzca utilidad.
+- Graficos falsos.
+- Copys de marketing.
+- Componentes con el mismo peso visual.
 
-El diseno debe parecer creado por alguien que entiende pagos, facturas, documentos y operaciones, no por alguien que solo conoce tendencias visuales.
+La interfaz debe parecer creada por alguien que entiende pagos, facturas, contratos, equipos y documentacion, no por alguien que solo aplica tendencias visuales.
 
-## 9. Movimiento e Interaccion
+## 10. Movimiento e Interaccion
 
-El producto no debe sentirse estatico. Debe tener efectos modernos y utiles, sin exagerar.
+El producto no debe sentirse estatico. Debe tener microinteracciones modernas, sobrias y funcionales.
 
-Usar microinteracciones para:
+Usar efectos para:
 
 - Hover en filas de tablas.
-- Focus visible en formularios.
-- Transiciones al abrir detalles.
-- Estados activos del sidebar.
-- Botones con feedback tactil.
-- Badges que cambian con suavidad.
-- Paneles de alerta que se destaquen.
-- Carga de datos con skeletons o estados suaves.
-- Apertura de modales tipo expediente.
-- Cambio de filtros sin saltos bruscos.
+- Focus claro en formularios.
+- Apertura de detalles tipo drawer o modal.
+- Transiciones suaves entre estados.
+- Feedback al registrar pago.
+- Indicador de carga en importacion Excel.
+- Skeleton loading para contenido.
+- Acciones secundarias visibles al pasar sobre filas.
+- Paneles de alerta con presencia visual.
 
-El movimiento debe sentirse:
+Efectos recomendados:
 
-- Rapido.
-- Preciso.
-- Sobrio.
-- Funcional.
+- Transiciones de 120-180ms.
+- Elevacion sutil en elementos interactivos.
+- Borde activo azul o teal.
+- Cambio de fondo suave en filas.
+- Drawer lateral para detalles.
+- Animacion de entrada discreta para modales.
 
 Evitar:
 
 - Animaciones largas.
+- Parallax.
 - Efectos de landing.
-- Movimiento que distraiga de los vencimientos.
-- Parallax o animaciones decorativas.
-- Elementos flotantes innecesarios.
+- Pulso exagerado.
+- Movimiento decorativo.
+- Animaciones que distraigan de los vencimientos.
 
-Ejemplos de efectos adecuados:
+## 11. Principio Rector UX
 
-- Filas de facturas con hover que revele acciones secundarias.
-- Tarjetas de monto con leve glow cuando tienen vencimientos proximos.
-- Alerta vencida con borde rojo y pulso sutil, no agresivo.
-- Transicion lateral al abrir detalle de factura.
-- Boton de registrar pago con cambio de estado inmediato.
-- Indicadores de progreso en importacion Excel.
+La aplicacion debe ser primero util y luego visualmente atractiva. La estetica debe reforzar el trabajo.
 
-## 10. Jerarquia de Informacion
+Cada componente debe ayudar a responder una pregunta:
 
-La informacion mas importante debe estar arriba y con mayor peso:
+- Esta factura vence pronto?
+- Esta vencida?
+- Esta pagada?
+- Es PEN o USD?
+- Que proveedor es?
+- Que contrato respalda esta factura?
+- Que documento falta?
+- Donde esta la carpeta?
+- Que accion sigue?
 
-1. Facturas vencidas.
-2. Facturas por vencer.
-3. Monto pendiente PEN.
-4. Monto pendiente USD.
-5. Proveedores con mayor deuda.
-6. Documentos faltantes.
-7. Acciones rapidas.
+Si un elemento visual no ayuda a operar mejor, debe simplificarse o eliminarse.
 
-La interfaz debe separar claramente:
+## 12. Layout General
 
-- Informacion critica.
-- Informacion secundaria.
-- Acciones.
-- Metadatos.
-- Documentos.
+Estructura recomendada:
 
-No todo debe ser una card. Algunas areas deben funcionar como bandejas, listas, tablas, barras de estado, paneles laterales o expedientes.
+- Sidebar oscuro corporativo.
+- Logo visible de ISEM.
+- Topbar clara y compacta.
+- Busqueda global prominente.
+- Contenido principal sobre fondo gris claro.
+- Superficies blancas para lectura.
+- Paneles con bordes limpios.
+- Densidad controlada.
 
-## 11. Pantalla Principal - Dashboard Operativo
+No usar una app completamente oscura como primera opcion. Para este producto conviene una base clara con estructura oscura, porque comunica seriedad y mejora la lectura.
 
-El dashboard no debe ser un tablero decorativo. Debe ser una bandeja de decision.
+## 13. Dashboard Operativo
+
+El dashboard es la pantalla mas importante. Debe funcionar como bandeja de decision, no como tablero decorativo.
 
 Debe responder:
 
 - Que debo pagar esta semana?
 - Que ya esta vencido?
-- Cuanto necesito programar en soles?
-- Cuanto necesito programar en dolares?
-- Cual proveedor requiere atencion?
+- Cuanto necesito en soles?
+- Cuanto necesito en dolares?
+- Que proveedor requiere atencion?
 - Que documento falta antes de pagar?
 
 Estructura recomendada:
 
-- Header compacto con nombre de empresa, busqueda global y alertas.
-- Bloque superior financiero:
+- Resumen financiero superior:
   - Pendiente PEN.
   - Pendiente USD.
-  - Vencidas.
-  - Proximas a vencer.
-- Panel central: Proximos pagos.
-- Panel destacado: Facturas vencidas.
-- Panel secundario: Gasto mensual por proveedor.
+  - Facturas vencidas.
+  - Facturas por vencer.
+- Panel principal: proximos pagos.
+- Panel de urgencia: vencidas.
+- Panel secundario: gasto por proveedor.
 - Acciones rapidas:
   - Nuevo contrato.
   - Nueva valorizacion.
   - Nueva factura.
   - Importar Excel.
 
-Las tarjetas financieras deben tener diferencias visuales claras:
+Reglas:
 
-- PEN y USD no deben mezclarse.
-- Vencido debe tener mas urgencia.
-- Proximo a vencer debe usar ambar.
-- Pagado o controlado debe usar verde.
+- PEN y USD deben estar separados visualmente.
+- Vencido debe tener mayor urgencia visual.
+- Por vencer debe usar advertencia ambar.
+- Pagado debe transmitir cierre y control.
+- Las acciones criticas deben estar visibles.
 
-## 12. Facturas - Bandeja de Pagos
+## 14. Facturas - Bandeja de Pagos
 
-Esta es una de las pantallas mas importantes.
-
-Debe parecer una bandeja de trabajo, no una tabla comun.
+La vista de facturas debe sentirse como bandeja de trabajo, no como tabla comun.
 
 Columnas sugeridas:
 
-- Estado visual.
+- Estado.
 - Numero de factura.
 - Proveedor.
 - Contrato.
 - Equipo.
-- Fecha vencimiento.
+- Vencimiento.
 - Dias restantes o dias vencida.
 - Moneda.
 - Monto.
 - Acciones.
 
-Acciones visibles:
+Acciones:
 
 - Ver detalle.
 - Registrar pago.
 - Registrar prorroga.
 - Descargar adjunto.
 
-Estados:
-
-- Pendiente.
-- Por vencer.
-- Vencida.
-- Vencida con prorroga.
-- Observada.
-- Pagada.
-
-Las facturas vencidas deben destacarse con:
-
-- Texto de estado.
-- Icono.
-- Borde o marcador.
-- No depender solo del color.
-
-Filtros importantes:
+Filtros:
 
 - Proveedor.
 - Estado.
@@ -327,11 +392,20 @@ Filtros importantes:
 - Rango de fechas.
 - Solo no pagadas.
 
-## 13. Detalle de Factura - Expediente
+Las facturas vencidas deben destacar con:
 
-El detalle de factura debe sentirse como un expediente auditado.
+- Texto claro.
+- Icono.
+- Borde o marcador rojo.
+- Dias vencidos.
 
-Debe mostrar:
+No depender solo del color.
+
+## 15. Detalle de Factura
+
+El detalle debe sentirse como expediente financiero-documental.
+
+Mostrar:
 
 - Numero de factura.
 - Estado.
@@ -344,35 +418,33 @@ Debe mostrar:
 - Fecha de vencimiento.
 - Moneda.
 - Monto total.
-- Diferencia entre valorizacion y factura si existe.
-- Prorroga si aplica.
+- Comparacion monto valorizado vs monto facturado.
+- Alerta si hay diferencia.
+- Prorroga si existe.
 - Fecha de pago si esta pagada.
 - Observaciones.
 
-Debe incluir seccion documental:
+Seccion documental:
 
 - Factura PDF/imagen.
-- Valorizacion emitida por proveedor.
+- Valorizacion del proveedor.
 - Comprobante de pago.
 - Otros documentos.
-
-Debe mostrar ruta de carpeta real de forma clara, tipo bloque tecnico/terminal:
-
-`E:\ISEM_ARCHIVOS\proveedores\...\contratos\...\valorizaciones\...`
+- Ruta de carpeta real.
 
 Acciones:
 
 - Marcar pagada.
 - Subir comprobante.
 - Registrar prorroga.
-- Descargar documentos.
-- Copiar ruta de carpeta.
+- Descargar documento.
+- Copiar ruta.
 
-## 14. Proveedores - Vista 360
+## 16. Proveedores - Vista 360
 
-La ficha de proveedor debe ayudar a revisar todo sin abrir muchos Excels.
+La ficha de proveedor debe ahorrar abrir multiples Excels.
 
-Lista de proveedores:
+Lista:
 
 - Razon social.
 - RUC.
@@ -384,11 +456,11 @@ Lista de proveedores:
 - Monto pendiente PEN.
 - Monto pendiente USD.
 
-Detalle 360:
+Detalle:
 
 - Datos generales.
-- Condiciones de pago.
 - Cuenta bancaria.
+- Condiciones de pago.
 - Contacto.
 - Equipos vinculados.
 - Contratos historicos.
@@ -397,11 +469,9 @@ Detalle 360:
 - Adjuntos.
 - Ruta de carpeta.
 
-Debe ser una ficha de trabajo, no una card bonita.
+Debe verse como ficha de control, no como card decorativa.
 
-## 15. Contratos
-
-Los contratos deben conectar proveedor, equipo, sede, tarifa, moneda, fechas y documentos.
+## 17. Contratos
 
 Lista:
 
@@ -411,7 +481,7 @@ Lista:
 - Equipos.
 - Inicio.
 - Fin.
-- Modalidad: hora/dia.
+- Modalidad hora/dia.
 - Tarifa.
 - Moneda.
 - Estado.
@@ -427,15 +497,15 @@ Detalle:
 - Facturas.
 - Ruta documental.
 
-Si faltan contrato firmado u orden de servicio, debe verse claramente.
+Si falta contrato firmado u orden de servicio, debe verse claramente.
 
-## 16. Equipos y Vehiculos
+## 18. Equipos y Vehiculos
 
-Debe ayudar a saber:
+La vista debe ayudar a ubicar:
 
 - Que equipo pertenece a que proveedor.
 - En que sede esta.
-- Bajo que contrato.
+- Bajo que contrato opera.
 - Que valorizaciones genero.
 - Que documentos/fotos tiene.
 
@@ -446,16 +516,16 @@ Campos:
 - Marca.
 - Modelo.
 - Ano.
-- Placa/codigo.
+- Placa o codigo.
 - Proveedor.
 - Sede.
 - Estado.
 
-La vista debe sentirse mas tecnica que financiera.
+Debe sentirse tecnica, ordenada y precisa.
 
-## 17. Valorizaciones
+## 19. Valorizaciones
 
-La valorizacion debe mostrar:
+Mostrar:
 
 - Numero.
 - Contrato.
@@ -471,7 +541,7 @@ La valorizacion debe mostrar:
 
 Si no tiene factura, debe quedar claro que esta pendiente.
 
-## 18. Reportes
+## 20. Reportes
 
 Los reportes deben sentirse ejecutivos y exportables.
 
@@ -481,21 +551,20 @@ Reportes:
 - Costo por proveedor.
 - Costo por equipo.
 - Valorizaciones por contrato.
-- Consolidado general por fechas.
+- Consolidado general.
 
-Debe incluir:
+Elementos:
 
 - Filtros visibles.
 - Totales PEN y USD separados.
-- Botones Excel y PDF.
-- Tablas claras.
+- Exportar Excel.
+- Exportar PDF.
 - Resumen superior.
+- Tabla legible.
 
-## 19. Configuracion
+## 21. Configuracion e Importacion
 
-La configuracion debe ser funcional, no decorativa.
-
-Incluye:
+Configuracion:
 
 - Usuarios.
 - Roles.
@@ -505,14 +574,14 @@ Incluye:
 - Plantilla de contrato.
 - Importacion Excel.
 
-La importacion Excel debe verse como un flujo:
+Importacion Excel debe ser un flujo claro:
 
 1. Descargar plantilla.
 2. Subir archivo.
 3. Previsualizar errores.
 4. Importar datos.
 
-Mostrar resultados con:
+Mostrar:
 
 - Creados.
 - Omitidos.
@@ -521,54 +590,28 @@ Mostrar resultados con:
 - Fila.
 - Mensaje.
 
-## 20. Sistema Visual
+## 22. Componentes del Design System
 
-### Layout
+Crear componentes reutilizables:
 
-- Sidebar estable.
-- Topbar compacta.
-- Contenido con maximo aprovechamiento del espacio.
-- Tablas y bandejas como elementos principales.
-- Detalles como paneles o modales tipo expediente.
+- Sidebar.
+- Topbar.
+- Busqueda global.
+- Tarjetas de metrica.
+- Badges de estado.
+- Bandeja de pagos.
+- Tabla densa.
+- Drawer o modal de detalle.
+- Panel de carpeta documental.
+- Panel de adjuntos.
+- Filtros.
+- Formularios.
+- Botones primarios/secundarios.
+- Alertas.
+- Estados vacios.
+- Skeleton loading.
 
-### Bordes
-
-- Usar bordes rectos o radios moderados.
-- Evitar redondeo excesivo.
-- Bordes deben ayudar a separar informacion.
-
-### Tipografia
-
-- Clara y profesional.
-- Numeros financieros con buen peso.
-- Tablas con tamanos contenidos.
-- No usar titulares gigantes en pantallas operativas.
-
-### Iconografia
-
-- Iconos funcionales, no decorativos.
-- Usar iconos para acciones:
-  - pagar,
-  - descargar,
-  - abrir carpeta,
-  - alerta,
-  - contrato,
-  - factura,
-  - proveedor.
-
-### Estados
-
-Cada estado debe tener color, texto e icono.
-
-- Vencida: rojo.
-- Por vencer: ambar.
-- Pendiente: neutro/ambar.
-- Pagada: verde.
-- Observada: naranja/rojo suave.
-- Activo: verde.
-- Inactivo: gris.
-
-## 21. Responsive
+## 23. Responsive
 
 Disenar para:
 
@@ -585,57 +628,44 @@ En mobile priorizar:
 - Acciones de pago.
 - Busqueda.
 
-No ocultar acciones criticas. Si una tabla no cabe, convertirla en lista operativa compacta.
+Si la tabla no cabe, convertirla en lista operativa compacta. No ocultar acciones criticas.
 
-## 22. Accesibilidad y Legibilidad
-
-El usuario principal puede no ser tecnico. Algunos usuarios futuros pueden ser mayores.
+## 24. Accesibilidad y Legibilidad
 
 Requisitos:
 
 - Alto contraste.
 - Texto legible.
-- Botones claros.
-- Estados no dependientes solo del color.
+- Estados con texto + color + icono.
 - Focus visible.
-- Buen tamano tactil en mobile.
-- Formularios comprensibles.
+- Botones tactiles adecuados.
+- Formularios claros.
+- Tablas escaneables.
+- No depender de color solamente.
 
-## 23. Datos Reales de Referencia
+El producto debe ser comodo para usuarios no tecnicos y usuarios administrativos.
 
-La app maneja:
+## 25. Datos Realistas para Mockups
 
-- Proveedores.
-- RUC.
-- Contratos.
-- Maquinaria.
-- Vehiculos.
-- Sedes.
-- Valorizaciones.
-- Facturas.
-- Comprobantes de pago.
-- Adjuntos PDF/imagenes.
-- Carpetas reales.
-- Monedas PEN y USD.
-- Fechas de vencimiento.
-- Prorrogas.
-- Estados de pago.
-
-Usar ejemplos realistas en mockups, no lorem ipsum.
+Usar ejemplos reales o plausibles, no lorem ipsum.
 
 Ejemplos:
 
 - Proveedor: Maquinarias Andinas SAC.
+- Proveedor: Transportes del Sur EIRL.
 - Factura: F001-004582.
+- Factura: E001-000731.
 - Contrato: ISEM-2026-001.
 - Equipo: Excavadora CAT 320.
 - Moneda: PEN / USD.
-- Monto: S/ 12,240.00 / USD 1,140.00.
-- Estado: Vencida / Pendiente / Pagada.
+- Monto: S/ 12,240.00.
+- Monto: USD 1,140.00.
+- Estado: Vencida / Pendiente / Pagada / Observada.
+- Ruta: E:\ISEM_ARCHIVOS\proveedores\...\contratos\...
 
-## 24. Entregables Esperados del Diseno
+## 26. Entregables Esperados
 
-Crear pantallas completas, no fragmentos:
+Crear pantallas completas:
 
 1. Dashboard operativo desktop.
 2. Bandeja de facturas desktop.
@@ -646,33 +676,23 @@ Crear pantallas completas, no fragmentos:
 7. Dashboard mobile.
 8. Facturas mobile.
 
-Incluir componentes reutilizables:
+No entregar solo una pantalla bonita. El diseño debe mostrar un sistema.
 
-- Sidebar.
-- Topbar.
-- Search global.
-- Metric cards.
-- Status badges.
-- Payment tray.
-- Document folder panel.
-- Data table.
-- Detail drawer/modal.
-- Upload area.
-- Report filters.
-- Buttons.
+## 27. Criterio de Exito
 
-## 25. Criterio de Exito
+El diseno sera correcto si:
 
-El diseno sera bueno si:
+- Transmite confianza.
+- Transmite seguridad.
+- Transmite tecnologia.
+- Tiene jerarquia visual clara.
+- No parece generado por IA.
+- No parece una landing page.
+- No se queda en un cambio de colores.
+- Se entiende que es una app de pagos, contratos y documentos.
+- Permite decidir que pagar en segundos.
+- Las acciones criticas son visibles.
+- Las carpetas y documentos son parte natural del flujo.
+- La identidad de ISEM se siente propia y profesional.
 
-- No parece una plantilla generica.
-- No parece una landing.
-- No parece solo un cambio de colores.
-- Se entiende rapidamente que es una herramienta de pagos, contratos y documentos.
-- El usuario puede decidir que pagar en segundos.
-- Las acciones criticas estan visibles.
-- Los documentos y carpetas son parte natural del flujo.
-- La interfaz se siente moderna, dinamica y profesional.
-- La identidad de ISEM se nota sin saturar.
-
-El objetivo final es una aplicacion que se sienta hecha para ISEM, no una app generica adaptada a ISEM.
+El objetivo final es que la aplicacion parezca hecha especificamente para ISEM, con criterio de producto real y no con apariencia generica.
