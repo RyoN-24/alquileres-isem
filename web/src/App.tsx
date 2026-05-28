@@ -112,7 +112,6 @@ type InvoiceStatus = 'PENDIENTE' | 'PAGADA' | 'VENCIDA' | 'OBSERVADA'
 type Currency = 'PEN' | 'USD'
 type AttachmentEntityType = 'SUPPLIER' | 'EQUIPMENT' | 'CONTRACT' | 'VALUATION' | 'INVOICE' | 'PAYMENT'
 type TableFilterPreset = {
-  key: number
   query?: string
   status?: string
   site?: string
@@ -514,6 +513,7 @@ function App() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadSuppliers()
     void loadEquipment()
     void loadContracts()
@@ -525,6 +525,8 @@ function App() {
     void loadAlertSettings()
     void loadContractTemplate()
     void loadUsers()
+    // The load functions are intentionally omitted to avoid re-running this bootstrapping effect on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, user?.role])
 
   const dashboard = useMemo(() => {
@@ -552,7 +554,7 @@ function App() {
   }
 
   const openInvoicesWithPreset = (preset: Omit<TableFilterPreset, 'key'>) => {
-    setInvoiceFilterPreset({ ...preset, key: Date.now() })
+    setInvoiceFilterPreset({ ...preset })
     setActiveView('facturas')
     setMobileMenuOpen(false)
   }
@@ -1685,6 +1687,7 @@ function DataSection<T extends Record<string, unknown>>({
 
   useEffect(() => {
     if (!filterPreset) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setQuery(filterPreset.query ?? '')
     setStatusFilter(filterPreset.status ?? 'TODOS')
     setSiteFilter(filterPreset.site ?? 'TODAS')
@@ -2591,12 +2594,6 @@ function ValuationForm({
   const selectedContract = contracts.find((contract) => contract.id === contractId)
   const [currency, setCurrency] = useState<CreateValuationInput['currency']>('PEN')
 
-  useEffect(() => {
-    if (selectedContract) {
-      setCurrency(selectedContract.currency)
-    }
-  }, [selectedContract])
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
@@ -2641,7 +2638,16 @@ function ValuationForm({
         <form className="quick-form" onSubmit={handleSubmit}>
           <label>
             Contrato
-            <select required value={contractId} onChange={(event) => setContractId(event.target.value)}>
+            <select
+              required
+              value={contractId}
+              onChange={(event) => {
+                const nextContractId = event.target.value
+                setContractId(nextContractId)
+                const nextContract = contracts.find((contract) => contract.id === nextContractId)
+                if (nextContract) setCurrency(nextContract.currency)
+              }}
+            >
               <option value="">Seleccionar</option>
               {contracts.map((contract) => (
                 <option key={contract.id} value={contract.id}>
@@ -3115,7 +3121,7 @@ function AttachmentManager({
         {attachments.map((attachment) => (
           <article key={attachment.id} className="attachment-row">
             <div>
-              <strong>{attachment.category}</strong>
+              <strong>{attachment.category} v{attachment.version}</strong>
               <span>{attachment.fileName}</span>
               <small>{attachment.storagePath}</small>
             </div>
@@ -3899,6 +3905,7 @@ function SettingsView({
   const activeUsers = users.filter((item) => item.isActive)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTemplateValue(contractTemplate?.template ?? '')
   }, [contractTemplate?.template])
 

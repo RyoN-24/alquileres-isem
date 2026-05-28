@@ -235,11 +235,23 @@ proveedores/
 
 Estos usuarios se crean al ejecutar el seed.
 
-## Pendiente para completar primer sprint
+## Cierre MVP local
 
-1. Reemplazar/versionar adjuntos existentes y registrar historial.
-2. Preparacion para produccion.
-3. Ajustes visuales finos luego de probar con datos reales del usuario.
+- Versionado de adjuntos por entidad y categoria: implementado.
+- Frontend `npm run lint`: correcto.
+- Frontend `npm run build`: correcto.
+- Backend `npm test`: correcto.
+- Backend `npm run build`: correcto.
+- Auditoria `npm audit --audit-level=high`: sin vulnerabilidades altas en API ni web.
+- Guia de produccion creada en `docs/guia-cierre-y-produccion.md`.
+
+## Pendiente externo para produccion
+
+1. Definir servidor/dominio/HTTPS.
+2. Migrar base final a PostgreSQL o Supabase.
+3. Configurar backups de base de datos y carpeta documental.
+4. Configurar credenciales reales de correo y WhatsApp Business si se desean alertas externas.
+5. Cambiar usuarios semilla y contrasenas antes de operar con datos sensibles.
 
 ## Proximo bloque recomendado
 

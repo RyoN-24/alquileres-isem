@@ -116,6 +116,7 @@ async function resolveDestination(input: {
 }
 
 export async function uploadAttachment(input: UploadAttachmentInput) {
+  const category = normalizeCategory(input.category)
   if (!allowedMimeTypes.has(input.file.mimetype)) {
     throw new HttpError(422, 'INVALID_FILE_TYPE', 'Solo se permiten PDF o imagenes')
   }
@@ -125,6 +126,15 @@ export async function uploadAttachment(input: UploadAttachmentInput) {
   }
 
   const destination = await resolveDestination(input)
+  const latestAttachment = await prisma.attachment.findFirst({
+    where: {
+      entityType: input.entityType,
+      entityId: destination.relatedEntityId,
+      category,
+    },
+    orderBy: { version: 'desc' },
+  })
+  const version = (latestAttachment?.version ?? 0) + 1
   const storagePath = await localVisibleStorage.saveUploadedFile({
     tempPath: input.file.path,
     destinationFolder: destination.folder,
@@ -140,7 +150,8 @@ export async function uploadAttachment(input: UploadAttachmentInput) {
       fileType: input.file.mimetype,
       fileSizeBytes: input.file.size,
       storagePath,
-      category: normalizeCategory(input.category),
+      category,
+      version,
       uploadedById: input.userId,
     },
   })
@@ -152,9 +163,10 @@ export async function uploadAttachment(input: UploadAttachmentInput) {
       entityId: destination.relatedEntityId,
       action: 'UPLOAD_ATTACHMENT',
       metadata: {
-        category: normalizeCategory(input.category),
+        category,
         fileName: input.file.originalname,
         storagePath,
+        version,
       },
     },
   })
