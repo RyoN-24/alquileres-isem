@@ -1,62 +1,301 @@
-# Design Brief - Alquileres ISEM
+# Design Brief Estricto - Alquileres ISEM
 
-## 1. Contexto del Producto
+## 1. Objetivo del Archivo
 
-Alquileres ISEM es una plataforma web responsive para INDUSTRIAS Y SERVICIOS ELECTRO-MECANICOS SRL, empresa peruana que controla alquileres de maquinaria, equipos y vehiculos provistos por proveedores externos.
+Este archivo debe guiar el rediseño visual de la aplicacion Alquileres ISEM en Stitch/Figma.
 
-La aplicacion centraliza proveedores, contratos, equipos, valorizaciones, facturas, alertas de vencimiento, comprobantes de pago, documentos adjuntos y carpetas documentales reales.
+El diseño debe respetar estrictamente el alcance funcional existente del producto. No inventar modulos, pestañas, secciones ni flujos que no existan en el sistema.
 
-El producto debe ahorrar tiempo. Actualmente el control manual por Excel o por proveedor genera trabajo repetitivo, riesgo de olvido y poca visibilidad sobre pagos proximos. La interfaz debe convertir esa informacion dispersa en una bandeja de control clara, segura y accionable.
+El objetivo no es crear una app nueva. El objetivo es rediseñar visualmente la app actual para que se vea moderna, confiable, segura, tecnologica y con jerarquia profesional, manteniendo exactamente la logica del producto: alquileres de maquinaria/vehiculos, contratos, valorizaciones, facturas, pagos, alertas, reportes, documentos y carpetas reales.
 
-No disenar una landing page. No disenar una maqueta estatica. No disenar un dashboard generico de IA. Disenar una herramienta real de gestion operativa y financiera.
+## 2. Producto
 
-## 2. Objetivo del Diseno
+Nombre del producto:
 
-Crear una aplicacion que transmita:
+```text
+Alquileres ISEM
+```
 
-- Confianza.
-- Seguridad.
-- Tecnologia.
-- Jerarquia.
-- Orden.
-- Precision.
-- Control financiero.
-- Control documental.
+Empresa:
 
-El usuario debe entender en pocos segundos:
+```text
+INDUSTRIAS Y SERVICIOS ELECTRO-MECANICOS SRL
+RUC: 20220199968
+Pais: Peru
+```
 
-- Cuanto debe pagar.
-- En que moneda debe pagar: PEN o USD.
-- Que facturas vencen pronto.
-- Que facturas ya vencieron.
-- Que proveedor esta asociado.
-- Que contrato y equipo respaldan la factura.
+Proposito:
+
+Centralizar y controlar el alquiler de equipos, maquinaria y vehiculos que proveedores externos suministran a ISEM. La plataforma administra proveedores, equipos, contratos, valorizaciones, facturas, vencimientos de pago, documentos adjuntos y carpetas documentales reales.
+
+## 3. Problema que Resuelve
+
+El usuario no quiere revisar un Excel distinto por proveedor ni buscar documentos manualmente. Necesita una sola plataforma para saber:
+
+- Que proveedor debe cobrar.
+- Que factura vence.
+- Que factura ya vencio.
+- Que monto debe programar en PEN.
+- Que monto debe programar en USD.
+- Que contrato respalda la factura.
+- Que equipo o vehiculo corresponde.
+- Que valorizacion esta asociada.
 - Que documentos faltan.
-- Donde esta la carpeta documental.
-- Que accion debe tomar ahora.
+- Donde esta la carpeta real del respaldo documental.
 
-El diseno debe sentirse como un centro de control financiero-operativo para una empresa tecnica, no como una plantilla SaaS comun.
+La app debe ahorrar tiempo y reducir errores de seguimiento.
 
-## 3. Cambio de Direccion Visual
+## 4. Regla Critica: No Inventar Pestañas
 
-Olvidar la referencia visual anterior basada en negro y verde neon. La nueva direccion no debe depender de una captura especifica.
+La navegacion principal del diseño debe contener SOLO estas secciones:
 
-La prioridad ahora es construir una identidad visual propia para ISEM:
+1. Dashboard
+2. Proveedores
+3. Equipos
+4. Contratos
+5. Valorizaciones
+6. Facturas
+7. Reportes
+8. Configuracion
 
-- Tecnologica.
-- Corporativa.
-- Segura.
-- Con jerarquia clara.
-- Profesional para uso diario.
-- Legible para usuarios administrativos y directivos.
+No crear ninguna otra pestaña principal.
 
-La interfaz puede usar sidebar oscuro y superficies claras, o una variante hibrida, pero no debe caer en el error de solo cambiar colores. El diseno debe replantear composicion, densidad, tipografia, estados, interacciones, ritmo visual y jerarquia.
+No agregar:
 
-## 4. Paleta de Color Recomendada
+- CRM
+- Clientes
+- Ventas
+- Compras
+- Inventario
+- Recursos Humanos
+- Finanzas generales
+- Analytics separado
+- Calendario separado
+- Mensajeria
+- Proyectos
+- Tareas
+- Cotizaciones
+- Ordenes de compra
+- Caja
+- Bancos
+- Almacen
+- Mantenimiento
+- Notificaciones como pestaña independiente
+- Documentos como pestaña independiente
+- Ajustes avanzados separados
 
-Direccion: Tecnologia Confiable.
+Si se necesitan documentos, deben aparecer dentro de los detalles de factura, contrato, equipo, valorizacion o proveedor. No como modulo principal independiente.
 
-Esta paleta comunica seguridad y jerarquia mediante azul profundo, tecnologia mediante teal, y control operativo mediante estados sobrios.
+Si se necesitan graficos, deben estar dentro de Dashboard o Reportes. No crear una pestaña "Analytics".
+
+Si se necesitan alertas, deben aparecer en Dashboard, topbar o facturas. No crear una pestaña "Alertas".
+
+## 5. Pantallas Permitidas
+
+El diseño puede incluir solo estas pantallas o vistas:
+
+### Pantallas principales
+
+- Dashboard
+- Proveedores
+- Equipos
+- Contratos
+- Valorizaciones
+- Facturas
+- Reportes
+- Configuracion
+
+### Vistas de detalle permitidas
+
+- Detalle 360 de proveedor
+- Detalle de equipo
+- Detalle de contrato
+- Detalle de valorizacion
+- Detalle de factura
+
+### Formularios permitidos
+
+- Nuevo proveedor
+- Nuevo equipo
+- Nuevo contrato
+- Nueva valorizacion
+- Nueva factura
+- Registrar pago
+- Registrar prorroga
+- Subir adjunto
+- Importar Excel
+- Crear usuario
+- Crear sede
+- Crear tipo de equipo
+- Editar parametros de alertas
+- Editar plantilla de contrato
+
+### Acciones permitidas
+
+- Buscar globalmente
+- Filtrar tablas
+- Ver detalle
+- Copiar ruta de carpeta
+- Descargar adjunto
+- Subir adjunto
+- Generar PDF de contrato
+- Exportar reporte Excel
+- Exportar reporte PDF
+- Previsualizar importacion Excel
+- Importar datos desde Excel
+- Marcar factura como pagada
+- Registrar prorroga
+
+No diseñar flujos fuera de esta lista.
+
+## 6. Modulos Reales del Producto
+
+### Proveedores
+
+Datos:
+
+- Razon social
+- Nombre comercial
+- RUC
+- Contacto
+- Telefono
+- Correo
+- Direccion
+- Banco
+- Cuenta
+- Condicion de pago por defecto
+- Estado activo/inactivo
+- Historial de contratos
+- Historial de facturas
+- Carpeta documental
+
+### Equipos
+
+Datos:
+
+- Tipo
+- Descripcion
+- Marca
+- Modelo
+- Año
+- Placa o codigo interno
+- Proveedor
+- Sede
+- Estado
+- Documentos/fotos
+
+### Contratos
+
+Datos:
+
+- Numero de contrato
+- Proveedor
+- Equipos incluidos
+- Sede
+- Fecha inicio
+- Fecha fin
+- Modalidad de cobro: hora o dia
+- Tarifa
+- Moneda: PEN o USD
+- Plazo de vencimiento de factura
+- Observaciones
+- Estado
+- Contrato generado PDF
+- Contrato firmado
+- Orden de servicio
+
+### Valorizaciones
+
+Datos:
+
+- Numero de valorizacion
+- Contrato
+- Equipo
+- Periodo o fecha de corte
+- Horas o dias trabajados
+- Tarifa
+- Monto calculado
+- Moneda
+- Estado
+- Archivo de valorizacion del proveedor
+
+### Facturas
+
+Datos:
+
+- Numero de factura
+- Proveedor
+- Contrato
+- Valorizacion
+- Fecha de emision
+- Fecha de vencimiento
+- Moneda
+- Monto
+- Estado
+- Archivo factura PDF/imagen
+- Comprobante de pago
+- Fecha de pago
+- Prorroga
+- Observaciones
+
+### Alertas
+
+No son una pestaña.
+
+Deben aparecer en:
+
+- Dashboard
+- Topbar
+- Facturas
+
+Reglas:
+
+- Avisar 3 dias antes del vencimiento.
+- Factura vencida sin pagar debe destacarse.
+- Alertas permanecen hasta marcar como pagada.
+- Puede existir prorroga.
+
+### Reportes
+
+Tipos reales:
+
+- Facturas por vencer/vencidas
+- Costo por proveedor
+- Costo por equipo
+- Valorizaciones por contrato
+- Consolidado por rango de fechas
+
+Exportaciones:
+
+- Excel
+- PDF
+
+## 7. Direccion Visual
+
+La interfaz debe transmitir:
+
+- Confianza
+- Seguridad
+- Tecnologia
+- Jerarquia
+- Orden
+- Control financiero
+- Control documental
+
+No debe parecer:
+
+- Proyecto generico de IA
+- Dashboard de plantilla
+- Landing page
+- App estatica
+- Cambio superficial de colores
+- Sistema con pestañas inventadas
+
+La estetica debe ser tecnologica corporativa: base clara, sidebar oscuro, colores sobrios, datos bien jerarquizados y microinteracciones funcionales.
+
+## 8. Paleta de Color Recomendada
+
+Usar una paleta de tecnologia confiable. No usar negro + verde neon como base. No usar morado SaaS generico.
 
 ```css
 --bg-main: #F5F7FA;
@@ -87,612 +326,656 @@ Esta paleta comunica seguridad y jerarquia mediante azul profundo, tecnologia me
 --sidebar-muted: #AAB6C5;
 ```
 
-## 5. Uso de la Paleta
+Uso:
 
-### Azul profundo
+- Azul profundo para confianza y autoridad.
+- Teal para tecnologia e interaccion.
+- Fondo claro para legibilidad.
+- Sidebar oscuro para jerarquia.
+- Verde para pagado/activo.
+- Ambar para por vencer/prorroga.
+- Rojo para vencido/error.
+- Azul informativo para documentos/reportes.
 
-Usar `#123C69` como color principal. Debe comunicar confianza, seguridad, estabilidad y autoridad.
+## 9. Tipografia
 
-Usos:
+Usar tipografia que comunique precision, tecnologia y confianza.
 
-- Botones primarios.
-- Estados activos importantes.
-- Titulos o indicadores clave.
-- Sidebar accents.
-- Iconos principales.
-
-### Azul tecnologia
-
-Usar `#0F5C8C` como apoyo para elementos tecnologicos o de navegacion.
-
-Usos:
-
-- Hover.
-- Enlaces.
-- Borde activo.
-- Graficos secundarios.
-
-### Teal tecnologico
-
-Usar `#00A6A6` como acento de modernidad, no como color dominante.
-
-Usos:
-
-- Indicadores de sistema.
-- Confirmaciones menores.
-- Elementos interactivos.
-- Chips informativos.
-- Detalles tecnologicos.
-
-### Fondo claro
-
-Usar `#F5F7FA` como fondo general para mejorar legibilidad y confianza.
-
-La app no debe sentirse pesada ni oscura por completo. El producto es de uso diario y debe ser facil de leer.
-
-### Sidebar oscuro
-
-Usar `#0B1220` para sidebar y zonas de estructura. Esto aporta jerarquia, tecnologia y presencia corporativa.
-
-### Estados
-
-Los estados deben ser sobrios y claros:
-
-- Pagado / activo: `#2E7D52`.
-- Por vencer / advertencia: `#C88719`.
-- Vencido / error: `#B23A32`.
-- Informativo / documento: `#3267C8`.
-
-Los colores de estado nunca deben ser el unico indicador. Agregar texto, icono y/o marcador visual.
-
-## 6. Tipografia Recomendada
-
-La tipografia debe comunicar precision, tecnologia y confianza. Evitar fuentes demasiado redondeadas, decorativas o con personalidad excesivamente amigable.
-
-### Opcion principal recomendada
+Recomendacion:
 
 ```text
 IBM Plex Sans
 ```
 
-Por que:
-
-- Tiene caracter tecnico.
-- Se siente institucional.
-- Funciona bien en tablas y formularios.
-- Comunica ingenieria y sistema serio.
-
-### Opcion alternativa
+Alternativa:
 
 ```text
 Inter
 ```
 
-Por que:
-
-- Muy legible.
-- Excelente para dashboards.
-- Moderna y limpia.
-- Buena para interfaces con mucha informacion.
-
-### Recomendacion final
-
-Usar:
-
-```text
-IBM Plex Sans como tipografia principal.
-Inter como alternativa para numeros o si se prefiere una implementacion mas simple.
-```
-
-Si solo se implementa una familia, usar IBM Plex Sans.
-
-## 7. Jerarquia Tipografica
-
-La jerarquia no debe depender solo del tamano. Debe usar posicion, peso, color, agrupacion, iconografia y espaciado.
-
-Escala recomendada:
+Escala:
 
 ```css
-Pantalla / H1: 24-28px, weight 700
-Seccion / H2: 18-20px, weight 700
-Bloque / H3: 15-16px, weight 700
-Body: 14px, weight 400/500
-Tabla: 13px, weight 400/500
-Labels: 12px, weight 600
-Montos importantes: 28-34px, weight 700
-Badges: 11-12px, weight 700
+H1 pantalla: 24-28px, 700
+H2 seccion: 18-20px, 700
+H3 bloque: 15-16px, 700
+Body: 14px, 400/500
+Tabla: 13px, 400/500
+Labels: 12px, 600
+Montos principales: 28-34px, 700
+Badges: 11-12px, 700
 ```
 
-Reglas:
+La jerarquia no debe depender solo del tamaño. Usar posicion, peso, contraste, agrupacion e iconografia.
 
-- Montos PEN/USD deben tener jerarquia fuerte.
-- Tablas deben mantenerse densas y legibles.
-- No usar titulos gigantes sin funcion.
-- No usar marketing copy.
-- Los encabezados deben ser claros y operativos.
+## 10. Layout Principal
 
-## 8. Personalidad Visual
+### Sidebar
 
-La interfaz debe sentirse:
+Debe incluir SOLO:
 
-- Corporativa.
-- Tecnologica.
-- Segura.
-- Ejecutiva.
-- Ordenada.
-- Confiable.
-- Moderna.
-- Con jerarquia.
-- Diseñada para trabajo real.
+- Logo ISEM
+- Dashboard
+- Proveedores
+- Equipos
+- Contratos
+- Valorizaciones
+- Facturas
+- Reportes
+- Configuracion
 
-No debe sentirse:
+No agregar otros items.
 
-- Generica.
-- Hecha por IA.
-- Como fintech decorativa.
-- Como ERP antiguo.
-- Como landing page.
-- Como dashboard de tarjetas repetidas.
-- Como interfaz estatica.
+Sidebar recomendado:
 
-## 9. Reglas Anti Diseno IA
+- Fondo `#0B1220`
+- Texto claro
+- Estado activo con azul/teal
+- Iconos funcionales
+- Logo visible
 
-Evitar estrictamente:
+### Topbar
 
-- Hero sections.
-- Gradientes decorativos.
-- Orbes, blobs, bokeh o fondos abstractos.
-- Cards repetidas sin intencion.
-- Iconos decorativos sin funcion.
-- Exceso de sombras.
-- Exceso de redondeo.
-- Paleta morada/azul SaaS generica.
-- Tipografia gigante sin proposito.
-- Mucho espacio vacio que reduzca utilidad.
-- Graficos falsos.
-- Copys de marketing.
-- Componentes con el mismo peso visual.
+Debe incluir:
 
-La interfaz debe parecer creada por alguien que entiende pagos, facturas, contratos, equipos y documentacion, no por alguien que solo aplica tendencias visuales.
+- Titulo de pantalla actual
+- Nombre de empresa o contexto ISEM
+- Busqueda global
+- Indicador de alertas
+- Boton salir o usuario
 
-## 10. Movimiento e Interaccion
+No agregar menus sociales, mensajes ni accesos no existentes.
 
-El producto no debe sentirse estatico. Debe tener microinteracciones modernas, sobrias y funcionales.
+### Contenido
 
-Usar efectos para:
+Base clara, paneles blancos, bordes sutiles, tablas densas y areas de accion claras.
 
-- Hover en filas de tablas.
-- Focus claro en formularios.
-- Apertura de detalles tipo drawer o modal.
-- Transiciones suaves entre estados.
-- Feedback al registrar pago.
-- Indicador de carga en importacion Excel.
-- Skeleton loading para contenido.
-- Acciones secundarias visibles al pasar sobre filas.
-- Paneles de alerta con presencia visual.
+## 11. Dashboard
 
-Efectos recomendados:
+El Dashboard es la pantalla principal.
 
-- Transiciones de 120-180ms.
-- Elevacion sutil en elementos interactivos.
-- Borde activo azul o teal.
-- Cambio de fondo suave en filas.
-- Drawer lateral para detalles.
-- Animacion de entrada discreta para modales.
+Debe ser una bandeja de decision operativa, no un tablero decorativo.
 
-Evitar:
+Debe incluir:
 
-- Animaciones largas.
-- Parallax.
-- Efectos de landing.
-- Pulso exagerado.
-- Movimiento decorativo.
-- Animaciones que distraigan de los vencimientos.
+### Resumen financiero
 
-## 11. Principio Rector UX
+- Pendiente PEN
+- Pendiente USD
+- Facturas vencidas
+- Facturas proximas a vencer
+- Contratos activos
 
-La aplicacion debe ser primero util y luego visualmente atractiva. La estetica debe reforzar el trabajo.
+### Bandeja de proximos pagos
 
-Cada componente debe ayudar a responder una pregunta:
+Lista de facturas por vencer con:
 
-- Esta factura vence pronto?
-- Esta vencida?
-- Esta pagada?
-- Es PEN o USD?
-- Que proveedor es?
-- Que contrato respalda esta factura?
-- Que documento falta?
-- Donde esta la carpeta?
-- Que accion sigue?
+- Factura
+- Proveedor
+- Fecha de vencimiento
+- Dias restantes
+- Moneda
+- Monto
+- Accion ver detalle
 
-Si un elemento visual no ayuda a operar mejor, debe simplificarse o eliminarse.
+### Bandeja de vencidas
 
-## 12. Layout General
+Lista de facturas vencidas con:
 
-Estructura recomendada:
+- Factura
+- Proveedor
+- Dias vencida
+- Moneda
+- Monto
+- Accion registrar pago
+- Accion prorroga
 
-- Sidebar oscuro corporativo.
-- Logo visible de ISEM.
-- Topbar clara y compacta.
-- Busqueda global prominente.
-- Contenido principal sobre fondo gris claro.
-- Superficies blancas para lectura.
-- Paneles con bordes limpios.
-- Densidad controlada.
+### Graficos interactivos
 
-No usar una app completamente oscura como primera opcion. Para este producto conviene una base clara con estructura oscura, porque comunica seriedad y mejora la lectura.
+Incluir graficos interactivos dentro del Dashboard, no en una pestaña nueva.
 
-## 13. Dashboard Operativo
+Graficos permitidos:
 
-El dashboard es la pantalla mas importante. Debe funcionar como bandeja de decision, no como tablero decorativo.
+1. Gasto mensual por proveedor
+2. Facturas por estado
+3. Pendiente por moneda
+4. Vencimientos proximos por semana
 
-Debe responder:
+No agregar graficos que no tengan relacion con pagos, proveedores, contratos, valorizaciones o facturas.
 
-- Que debo pagar esta semana?
-- Que ya esta vencido?
-- Cuanto necesito en soles?
-- Cuanto necesito en dolares?
-- Que proveedor requiere atencion?
-- Que documento falta antes de pagar?
+### Accesos rapidos
 
-Estructura recomendada:
+- Nuevo contrato
+- Nueva valorizacion
+- Nueva factura
+- Importar Excel
 
-- Resumen financiero superior:
-  - Pendiente PEN.
-  - Pendiente USD.
-  - Facturas vencidas.
-  - Facturas por vencer.
-- Panel principal: proximos pagos.
-- Panel de urgencia: vencidas.
-- Panel secundario: gasto por proveedor.
-- Acciones rapidas:
-  - Nuevo contrato.
-  - Nueva valorizacion.
-  - Nueva factura.
-  - Importar Excel.
+## 12. Graficos Interactivos
 
-Reglas:
+Agregar graficos interactivos modernos y utiles.
 
-- PEN y USD deben estar separados visualmente.
-- Vencido debe tener mayor urgencia visual.
-- Por vencer debe usar advertencia ambar.
-- Pagado debe transmitir cierre y control.
-- Las acciones criticas deben estar visibles.
+No deben ser decorativos. Deben ayudar a tomar decisiones de pago.
 
-## 14. Facturas - Bandeja de Pagos
+### Grafico 1: Gasto mensual por proveedor
 
-La vista de facturas debe sentirse como bandeja de trabajo, no como tabla comun.
+Tipo sugerido:
 
-Columnas sugeridas:
+- Barras horizontales o columnas.
 
-- Estado.
-- Numero de factura.
-- Proveedor.
-- Contrato.
-- Equipo.
-- Vencimiento.
-- Dias restantes o dias vencida.
-- Moneda.
-- Monto.
-- Acciones.
+Datos:
+
+- Proveedor
+- Total PEN
+- Total USD si aplica
+- Rango mensual
+
+Interacciones:
+
+- Tooltip al pasar el mouse con proveedor, moneda y monto.
+- Click en proveedor filtra o abre detalle del proveedor.
+- Selector de periodo: mes actual, ultimos 3 meses, rango personalizado.
+- Leyenda para PEN y USD.
+
+### Grafico 2: Facturas por estado
+
+Tipo sugerido:
+
+- Dona o barras apiladas.
+
+Estados:
+
+- Pendiente
+- Por vencer
+- Vencida
+- Vencida con prorroga
+- Observada
+- Pagada
+
+Interacciones:
+
+- Click en un estado filtra la tabla de facturas.
+- Tooltip con cantidad y monto total.
+- Colores semanticos por estado.
+
+### Grafico 3: Pendiente por moneda
+
+Tipo sugerido:
+
+- Dos tarjetas-grafico o barras comparativas.
+
+Datos:
+
+- Total pendiente PEN
+- Total pendiente USD
+
+Interacciones:
+
+- Click en PEN abre facturas pendientes en PEN.
+- Click en USD abre facturas pendientes en USD.
+- Tooltip con desglose por proveedor principal.
+
+### Grafico 4: Vencimientos proximos
+
+Tipo sugerido:
+
+- Timeline semanal o barras por dia.
+
+Datos:
+
+- Facturas que vencen en los proximos 7 dias.
+- Facturas vencidas.
+
+Interacciones:
+
+- Hover muestra facturas del dia.
+- Click en dia filtra facturas por vencimiento.
+- Indicadores rojo/ambar segun urgencia.
+
+### Reglas para graficos
+
+- No usar graficos falsos ni decorativos.
+- No crear una pestaña Analytics.
+- Los graficos deben convivir con tablas y acciones.
+- Los graficos deben tener tooltips, filtros o clicks utiles.
+- Deben funcionar en mobile como tarjetas o listas graficas simples.
+
+## 13. Facturas
+
+La pantalla Facturas es critica.
+
+Debe ser una bandeja de pagos.
+
+Debe incluir:
+
+- Filtros por texto
+- Filtro por estado
+- Filtro por sede
+- Filtro por moneda
+- Rango de fechas
+- Boton limpiar filtros
+- Tabla/lista de facturas
+
+Columnas:
+
+- Numero
+- Proveedor
+- Contrato
+- Vencimiento
+- Monto
+- Estado
+- Acciones
+
+Acciones por fila:
+
+- Ver detalle
+- Marcar pagada
+- Prorroga
+
+No agregar columnas ajenas como cliente, vendedor, prioridad comercial, campaña, ticket, canal, region comercial.
+
+## 14. Detalle de Factura
+
+Vista tipo expediente.
+
+Debe incluir:
+
+- Numero de factura
+- Estado
+- Proveedor
+- Contrato
+- Valorizacion
+- Equipo
+- Fecha emision
+- Fecha vencimiento
+- Moneda
+- Monto
+- Monto valorizado
+- Alerta si no coincide monto/moneda
+- Prorroga si existe
+- Fecha de pago si existe
+- Observaciones
+- Ruta de carpeta real
+- Adjuntos
+
+Adjuntos permitidos:
+
+- Factura
+- Valorizacion proveedor
+- Comprobante de pago
+- Otros
 
 Acciones:
 
-- Ver detalle.
-- Registrar pago.
-- Registrar prorroga.
-- Descargar adjunto.
+- Registrar pago
+- Registrar prorroga
+- Subir adjunto
+- Descargar adjunto
+- Copiar ruta
 
-Filtros:
+## 15. Proveedores
 
-- Proveedor.
-- Estado.
-- Moneda.
-- Sede.
-- Rango de fechas.
-- Solo no pagadas.
+Pantalla Proveedores:
 
-Las facturas vencidas deben destacar con:
+- Tabla/lista de proveedores
+- Filtros
+- Boton nuevo proveedor
+- Accion ver detalle
 
-- Texto claro.
-- Icono.
-- Borde o marcador rojo.
-- Dias vencidos.
+Detalle proveedor:
 
-No depender solo del color.
+- Datos generales
+- Contacto
+- Banco/cuenta
+- Condiciones de pago
+- Equipos
+- Contratos
+- Facturas
+- Pendiente PEN
+- Pendiente USD
+- Ruta carpeta
 
-## 15. Detalle de Factura
+No agregar oportunidades, pipeline, ventas, clientes finales ni CRM.
 
-El detalle debe sentirse como expediente financiero-documental.
+## 16. Equipos
 
-Mostrar:
+Pantalla Equipos:
 
-- Numero de factura.
-- Estado.
-- Proveedor.
-- RUC.
-- Contrato.
-- Valorizacion.
-- Equipo.
-- Fecha de emision.
-- Fecha de vencimiento.
-- Moneda.
-- Monto total.
-- Comparacion monto valorizado vs monto facturado.
-- Alerta si hay diferencia.
-- Prorroga si existe.
-- Fecha de pago si esta pagada.
-- Observaciones.
+- Tabla/lista de equipos
+- Tipo
+- Descripcion
+- Marca/modelo/año
+- Placa/codigo
+- Proveedor
+- Sede
+- Estado
+- Accion ver detalle
 
-Seccion documental:
+Detalle equipo:
 
-- Factura PDF/imagen.
-- Valorizacion del proveedor.
-- Comprobante de pago.
-- Otros documentos.
-- Ruta de carpeta real.
+- Ficha tecnica
+- Proveedor
+- Contratos
+- Valorizaciones
+- Facturas asociadas
+- Documentos/fotos
+- Ruta carpeta
 
-Acciones:
-
-- Marcar pagada.
-- Subir comprobante.
-- Registrar prorroga.
-- Descargar documento.
-- Copiar ruta.
-
-## 16. Proveedores - Vista 360
-
-La ficha de proveedor debe ahorrar abrir multiples Excels.
-
-Lista:
-
-- Razon social.
-- RUC.
-- Contacto.
-- Estado.
-- Contratos activos.
-- Equipos alquilados.
-- Facturas pendientes.
-- Monto pendiente PEN.
-- Monto pendiente USD.
-
-Detalle:
-
-- Datos generales.
-- Cuenta bancaria.
-- Condiciones de pago.
-- Contacto.
-- Equipos vinculados.
-- Contratos historicos.
-- Valorizaciones.
-- Facturas.
-- Adjuntos.
-- Ruta de carpeta.
-
-Debe verse como ficha de control, no como card decorativa.
+No convertirlo en modulo de mantenimiento ni inventario general.
 
 ## 17. Contratos
 
-Lista:
+Pantalla Contratos:
 
-- Numero de contrato.
-- Proveedor.
-- Sede.
-- Equipos.
-- Inicio.
-- Fin.
-- Modalidad hora/dia.
-- Tarifa.
-- Moneda.
-- Estado.
-- Documentos faltantes.
+- Tabla/lista de contratos
+- Numero
+- Proveedor
+- Sede
+- Equipos
+- Fechas
+- Modalidad hora/dia
+- Tarifa
+- Moneda
+- Estado
+- Accion ver detalle
+
+Detalle contrato:
+
+- Equipos incluidos
+- Valorizaciones
+- Facturas
+- Documentos faltantes
+- Adjuntos
+- Ruta carpeta
+- Boton generar PDF
+
+Documentos:
+
+- Contrato generado
+- Contrato firmado
+- Orden de servicio
+- Otro documento
+
+No agregar aprobaciones complejas, firmas electronicas externas ni compras.
+
+## 18. Valorizaciones
+
+Pantalla Valorizaciones:
+
+- Tabla/lista de valorizaciones
+- Numero
+- Contrato
+- Equipo
+- Fecha de corte
+- Cantidad horas/dias
+- Monto calculado
+- Moneda
+- Estado
+- Accion ver detalle
 
 Detalle:
 
-- Generar PDF.
-- Contrato generado.
-- Contrato firmado.
-- Orden de servicio.
-- Valorizaciones.
-- Facturas.
-- Ruta documental.
+- Contrato
+- Equipo
+- Cantidad
+- Tarifa
+- Monto
+- Factura asociada
+- Archivo valorizacion proveedor
+- Ruta carpeta
 
-Si falta contrato firmado u orden de servicio, debe verse claramente.
+## 19. Reportes
 
-## 18. Equipos y Vehiculos
+Pantalla Reportes:
 
-La vista debe ayudar a ubicar:
+Debe permitir seleccionar solo estos reportes:
 
-- Que equipo pertenece a que proveedor.
-- En que sede esta.
-- Bajo que contrato opera.
-- Que valorizaciones genero.
-- Que documentos/fotos tiene.
-
-Campos:
-
-- Tipo.
-- Descripcion.
-- Marca.
-- Modelo.
-- Ano.
-- Placa o codigo.
-- Proveedor.
-- Sede.
-- Estado.
-
-Debe sentirse tecnica, ordenada y precisa.
-
-## 19. Valorizaciones
-
-Mostrar:
-
-- Numero.
-- Contrato.
-- Equipo.
-- Periodo o fecha de corte.
-- Horas o dias.
-- Tarifa.
-- Monto calculado.
-- Moneda.
-- Estado.
-- Factura asociada.
-- Archivo de valorizacion del proveedor.
-
-Si no tiene factura, debe quedar claro que esta pendiente.
-
-## 20. Reportes
-
-Los reportes deben sentirse ejecutivos y exportables.
-
-Reportes:
-
-- Facturas por vencer y vencidas.
-- Costo por proveedor.
-- Costo por equipo.
-- Valorizaciones por contrato.
-- Consolidado general.
+- Facturas por vencer/vencidas
+- Costos consolidados
+- Costo por proveedor
+- Costo por equipo
+- Valorizaciones por contrato
 
 Elementos:
 
-- Filtros visibles.
-- Totales PEN y USD separados.
-- Exportar Excel.
-- Exportar PDF.
-- Resumen superior.
-- Tabla legible.
+- Selector de reporte
+- Filtros por fecha
+- Filtro por sede
+- Totales PEN/USD
+- Vista previa de resultados
+- Exportar Excel
+- Exportar PDF
 
-## 21. Configuracion e Importacion
+Graficos interactivos permitidos en reportes:
 
-Configuracion:
+- Barras por proveedor
+- Barras por equipo
+- Distribucion por estado de factura
+- Evolucion mensual
 
-- Usuarios.
-- Roles.
-- Sedes.
-- Tipos de equipo.
-- Alertas.
-- Plantilla de contrato.
-- Importacion Excel.
+No crear pestaña nueva para estos graficos.
 
-Importacion Excel debe ser un flujo claro:
+## 20. Configuracion
 
-1. Descargar plantilla.
-2. Subir archivo.
-3. Previsualizar errores.
-4. Importar datos.
+Pantalla Configuracion:
 
-Mostrar:
+Debe incluir:
 
-- Creados.
-- Omitidos.
-- Errores.
-- Hoja.
-- Fila.
-- Mensaje.
+- Usuarios
+- Roles
+- Tipos de equipo
+- Sedes
+- Alertas
+- Plantilla de contrato
+- Importacion Excel
 
-## 22. Componentes del Design System
+No dividir en subpestañas principales nuevas. Puede usar secciones internas o acordeones dentro de Configuracion.
 
-Crear componentes reutilizables:
+Importacion Excel:
 
-- Sidebar.
-- Topbar.
-- Busqueda global.
-- Tarjetas de metrica.
-- Badges de estado.
-- Bandeja de pagos.
-- Tabla densa.
-- Drawer o modal de detalle.
-- Panel de carpeta documental.
-- Panel de adjuntos.
-- Filtros.
-- Formularios.
-- Botones primarios/secundarios.
-- Alertas.
-- Estados vacios.
-- Skeleton loading.
+- Descargar plantilla
+- Seleccionar archivo
+- Previsualizar
+- Importar
+- Mostrar creados/omitidos/errores
+- Mostrar hoja/fila/mensaje
 
-## 23. Responsive
+## 21. Estados Visuales
 
-Disenar para:
+Estados reales:
 
-- Desktop 1440px.
-- Tablet 768px.
-- Mobile 390px.
+### Facturas
 
-En mobile priorizar:
+- Registrada
+- Pendiente
+- Observada
+- Vencida
+- Vencida con prorroga
+- Pagada
+- Anulada
 
-- Facturas vencidas.
-- Facturas por vencer.
-- Monto PEN.
-- Monto USD.
-- Acciones de pago.
-- Busqueda.
+### Contratos
 
-Si la tabla no cabe, convertirla en lista operativa compacta. No ocultar acciones criticas.
+- Borrador
+- Activo
+- Por vencer
+- Finalizado
+- Cancelado
 
-## 24. Accesibilidad y Legibilidad
+### Valorizaciones
 
-Requisitos:
+- Borrador
+- Pendiente factura
+- Facturada
+- Observada
+- Pagada
+- Anulada
 
-- Alto contraste.
-- Texto legible.
-- Estados con texto + color + icono.
-- Focus visible.
-- Botones tactiles adecuados.
-- Formularios claros.
-- Tablas escaneables.
-- No depender de color solamente.
+### Equipos
 
-El producto debe ser comodo para usuarios no tecnicos y usuarios administrativos.
+- Disponible
+- En obra
+- En mantenimiento
+- Retirado
+- Finalizado
 
-## 25. Datos Realistas para Mockups
+Los badges deben usar texto, color e icono. No depender solo del color.
 
-Usar ejemplos reales o plausibles, no lorem ipsum.
+## 22. Componentes Permitidos
 
-Ejemplos:
+Componentes que si deben diseñarse:
 
-- Proveedor: Maquinarias Andinas SAC.
-- Proveedor: Transportes del Sur EIRL.
-- Factura: F001-004582.
-- Factura: E001-000731.
-- Contrato: ISEM-2026-001.
-- Equipo: Excavadora CAT 320.
-- Moneda: PEN / USD.
-- Monto: S/ 12,240.00.
-- Monto: USD 1,140.00.
-- Estado: Vencida / Pendiente / Pagada / Observada.
+- Sidebar
+- Topbar
+- Busqueda global
+- Tarjetas de resumen
+- Bandeja de pagos
+- Tabla densa
+- Filtros
+- Badges de estado
+- Botones
+- Drawer/modal de detalle
+- Panel de adjuntos
+- Panel de carpeta documental
+- Graficos interactivos
+- Formularios
+- Alertas
+- Skeleton loading
+- Empty states
+- Upload area
+
+Componentes que no deben aparecer:
+
+- Chat
+- Inbox
+- Calendario completo
+- Kanban
+- CRM pipeline
+- E-commerce
+- Mapa geografico
+- Timeline de proyecto
+- Feed social
+- Campañas
+- Productos/stock
+
+## 23. Movimiento e Interaccion
+
+La app no debe sentirse estatica.
+
+Interacciones esperadas:
+
+- Hover en filas de facturas con acciones visibles.
+- Click en tarjeta PEN/USD filtra facturas.
+- Click en grafico filtra o abre detalle.
+- Tooltip en graficos.
+- Drawer lateral para detalle de factura/proveedor/contrato.
+- Transicion suave al abrir modales.
+- Feedback visual al marcar pagada.
+- Skeletons al cargar.
+- Estado de carga al importar Excel.
+- Focus visible en formularios.
+
+Tiempos:
+
+- 120ms a 180ms para hover y botones.
+- 180ms a 240ms para drawers/modales.
+
+Evitar:
+
+- Parallax
+- Animaciones largas
+- Efectos decorativos
+- Movimiento que distraiga de los pagos
+
+## 24. Responsive
+
+Diseñar para:
+
+- Desktop 1440px
+- Tablet 768px
+- Mobile 390px
+
+Mobile:
+
+- Sidebar se convierte en menu.
+- Dashboard prioriza vencidas, por vencer, PEN y USD.
+- Facturas se muestran como lista de tarjetas compactas.
+- Acciones criticas visibles: detalle, pagar, prorroga.
+- Graficos se simplifican pero siguen siendo utiles.
+
+No ocultar informacion critica.
+
+## 25. Datos de Mockup
+
+Usar datos realistas:
+
+- Proveedor: Maquinarias Andinas SAC
+- Proveedor: Transportes del Sur EIRL
+- Factura: F001-004582
+- Factura: E001-000731
+- Contrato: ISEM-2026-001
+- Equipo: Excavadora CAT 320
+- Equipo: Camioneta Toyota Hilux
+- Sede: Obra Norte
+- Moneda: PEN
+- Moneda: USD
+- Monto: S/ 12,240.00
+- Monto: USD 1,140.00
+- Estado: Vencida
+- Estado: Pendiente
+- Estado: Pagada
 - Ruta: E:\ISEM_ARCHIVOS\proveedores\...\contratos\...
+
+No usar lorem ipsum.
 
 ## 26. Entregables Esperados
 
-Crear pantallas completas:
+Stitch debe generar diseños para estas pantallas, sin agregar otras:
 
-1. Dashboard operativo desktop.
-2. Bandeja de facturas desktop.
-3. Detalle de factura.
-4. Ficha 360 de proveedor.
-5. Detalle de contrato.
-6. Configuracion/importacion.
-7. Dashboard mobile.
-8. Facturas mobile.
+1. Dashboard desktop
+2. Facturas desktop
+3. Detalle de factura
+4. Proveedores desktop
+5. Detalle 360 de proveedor
+6. Contratos desktop
+7. Detalle de contrato
+8. Reportes desktop con graficos interactivos
+9. Configuracion desktop
+10. Dashboard mobile
+11. Facturas mobile
 
-No entregar solo una pantalla bonita. El diseño debe mostrar un sistema.
+No generar pantallas de modulos inexistentes.
 
 ## 27. Criterio de Exito
 
-El diseno sera correcto si:
+El diseño sera correcto si:
 
-- Transmite confianza.
-- Transmite seguridad.
-- Transmite tecnologia.
-- Tiene jerarquia visual clara.
-- No parece generado por IA.
-- No parece una landing page.
-- No se queda en un cambio de colores.
-- Se entiende que es una app de pagos, contratos y documentos.
-- Permite decidir que pagar en segundos.
+- Respeta exactamente las 8 secciones reales de navegacion.
+- No inventa pestañas.
+- No inventa modulos.
+- Transmite confianza, seguridad, tecnologia y jerarquia.
+- Hace evidente que el foco es pagos, vencimientos, proveedores, contratos y documentos.
+- Los graficos interactivos ayudan a filtrar o decidir, no decoran.
 - Las acciones criticas son visibles.
-- Las carpetas y documentos son parte natural del flujo.
-- La identidad de ISEM se siente propia y profesional.
-
-El objetivo final es que la aplicacion parezca hecha especificamente para ISEM, con criterio de producto real y no con apariencia generica.
+- La app se siente dinamica, no estatica.
+- La identidad de ISEM se siente profesional.
+- Parece un producto hecho para ISEM, no una plantilla generica.
