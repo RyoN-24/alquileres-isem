@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: alquileres-isem-postgres
+    environment:
+      POSTGRES_USER: isem
+      POSTGRES_PASSWORD: isem_dev_password
+      POSTGRES_DB: alquileres_isem
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+

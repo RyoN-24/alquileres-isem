@@ -1,0 +1,317 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  OPERATIVO
+}
+
+enum SupplierStatus {
+  ACTIVO
+  INACTIVO
+  BLOQUEADO
+}
+
+enum EquipmentStatus {
+  DISPONIBLE
+  EN_OBRA
+  EN_MANTENIMIENTO
+  RETIRADO
+  FINALIZADO
+}
+
+enum ContractStatus {
+  BORRADOR
+  ACTIVO
+  POR_VENCER
+  FINALIZADO
+  CANCELADO
+}
+
+enum BillingMode {
+  HORA
+  DIA
+}
+
+enum Currency {
+  PEN
+  USD
+}
+
+enum ValuationStatus {
+  BORRADOR
+  PENDIENTE_FACTURA
+  FACTURADA
+  OBSERVADA
+  PAGADA
+  ANULADA
+}
+
+enum InvoiceStatus {
+  REGISTRADA
+  PENDIENTE
+  OBSERVADA
+  VENCIDA
+  VENCIDA_CON_PRORROGA
+  PAGADA
+  ANULADA
+}
+
+enum AttachmentEntityType {
+  SUPPLIER
+  EQUIPMENT
+  CONTRACT
+  VALUATION
+  INVOICE
+  PAYMENT
+}
+
+enum AlertType {
+  FACTURA_POR_VENCER
+  FACTURA_VENCIDA
+  CONTRATO_POR_VENCER
+  CONTRATO_VENCIDO
+  DOCUMENTO_FALTANTE
+}
+
+model Company {
+  id           String   @id @default(uuid())
+  legalName    String
+  ruc          String   @unique
+  country      String   @default("Peru")
+  baseCurrency Currency @default(PEN)
+  timezone     String   @default("America/Lima")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sites        Site[]
+  users        User[]
+}
+
+model User {
+  id           String    @id @default(uuid())
+  companyId    String
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         UserRole
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  company      Company   @relation(fields: [companyId], references: [id])
+  auditLogs    AuditLog[]
+}
+
+model Site {
+  id        String     @id @default(uuid())
+  companyId String
+  name      String
+  address   String?
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  company   Company    @relation(fields: [companyId], references: [id])
+  equipment Equipment[]
+  contracts Contract[]
+}
+
+model Supplier {
+  id                     String         @id @default(uuid())
+  businessName           String
+  tradeName              String?
+  ruc                    String         @unique
+  contactName            String?
+  phone                  String?
+  email                  String?
+  address                String?
+  bankName               String?
+  bankAccountNumber      String?
+  defaultPaymentTermDays Int            @default(30)
+  status                 SupplierStatus @default(ACTIVO)
+  folderPath             String?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  equipment              Equipment[]
+  contracts              Contract[]
+  invoices               Invoice[]
+  attachments            Attachment[]   @relation("SupplierAttachments")
+}
+
+model EquipmentType {
+  id        String      @id @default(uuid())
+  name      String      @unique
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  equipment Equipment[]
+}
+
+model Equipment {
+  id                  String             @id @default(uuid())
+  supplierId          String
+  equipmentTypeId     String
+  currentSiteId       String?
+  description         String
+  brand               String?
+  model               String?
+  year                Int?
+  plateOrInternalCode String?            @unique
+  status              EquipmentStatus    @default(DISPONIBLE)
+  folderPath          String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  supplier            Supplier           @relation(fields: [supplierId], references: [id])
+  equipmentType       EquipmentType      @relation(fields: [equipmentTypeId], references: [id])
+  currentSite         Site?              @relation(fields: [currentSiteId], references: [id])
+  contractEquipment   ContractEquipment[]
+  valuations          Valuation[]
+}
+
+model Contract {
+  id                 String              @id @default(uuid())
+  supplierId         String
+  siteId             String
+  contractNumber     String              @unique
+  startDate          DateTime
+  endDate            DateTime
+  billingMode        BillingMode
+  rate               Decimal
+  currency           Currency
+  invoiceDueDays     Int                 @default(30)
+  notes              String?
+  status             ContractStatus      @default(BORRADOR)
+  folderPath         String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  supplier           Supplier            @relation(fields: [supplierId], references: [id])
+  site               Site                @relation(fields: [siteId], references: [id])
+  contractEquipment  ContractEquipment[]
+  valuations         Valuation[]
+  invoices           Invoice[]
+}
+
+model ContractEquipment {
+  contractId  String
+  equipmentId String
+  createdAt   DateTime  @default(now())
+  contract    Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+
+  @@id([contractId, equipmentId])
+}
+
+model Valuation {
+  id               String          @id @default(uuid())
+  contractId       String
+  equipmentId      String
+  valuationNumber  String
+  periodStart      DateTime?
+  periodEnd        DateTime?
+  cutoffDate       DateTime
+  quantity         Decimal
+  unitRate         Decimal
+  calculatedAmount Decimal
+  currency         Currency
+  status           ValuationStatus @default(PENDIENTE_FACTURA)
+  notes            String?
+  folderPath       String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  contract         Contract        @relation(fields: [contractId], references: [id])
+  equipment        Equipment       @relation(fields: [equipmentId], references: [id])
+  invoice          Invoice?
+
+  @@unique([contractId, valuationNumber])
+  @@index([equipmentId])
+}
+
+model Invoice {
+  id                     String        @id @default(uuid())
+  supplierId             String
+  contractId             String
+  valuationId            String        @unique
+  invoiceNumber          String
+  issueDate              DateTime
+  dueDate                DateTime
+  currency               Currency
+  totalAmount            Decimal
+  amountMismatchAccepted Boolean       @default(false)
+  status                 InvoiceStatus @default(PENDIENTE)
+  paidAt                 DateTime?
+  paymentExtensionDate   DateTime?
+  paymentExtensionReason String?
+  notes                  String?
+  folderPath             String?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  supplier               Supplier      @relation(fields: [supplierId], references: [id])
+  contract               Contract      @relation(fields: [contractId], references: [id])
+  valuation              Valuation     @relation(fields: [valuationId], references: [id])
+  alerts                 Alert[]
+
+  @@unique([supplierId, invoiceNumber])
+  @@index([dueDate, status])
+}
+
+model Attachment {
+  id           String               @id @default(uuid())
+  entityType   AttachmentEntityType
+  entityId     String
+  supplierId   String?
+  fileName     String
+  fileType     String
+  fileSizeBytes Int
+  storagePath  String
+  category     String
+  version      Int                  @default(1)
+  uploadedById String?
+  createdAt    DateTime             @default(now())
+  supplier     Supplier?            @relation("SupplierAttachments", fields: [supplierId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([supplierId])
+}
+
+model Alert {
+  id             String    @id @default(uuid())
+  invoiceId      String?
+  contractId     String?
+  alertType      AlertType
+  triggerDate    DateTime
+  isSeen         Boolean   @default(false)
+  isResolved     Boolean   @default(false)
+  emailSentAt    DateTime?
+  whatsappSentAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  invoice        Invoice?  @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId, isResolved])
+  @@index([contractId, isResolved])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  entityType String
+  entityId   String
+  action     String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
