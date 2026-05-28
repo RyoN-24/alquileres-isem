@@ -423,6 +423,40 @@
   max-width: 100%;
 }
 
+.data-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.data-summary-strip article,
+.report-insight-grid article {
+  min-height: 72px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #f7fafc);
+  padding: 12px;
+}
+
+.data-summary-strip span,
+.report-insight-grid span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.data-summary-strip strong,
+.report-insight-grid strong {
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
 .filters-row,
 .report-form,
 .quick-form {
@@ -506,11 +540,18 @@ th {
   color: var(--muted);
   font-size: 12px;
   text-transform: uppercase;
-  background: var(--surface-raised);
+  background: #eef3f8;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 tbody tr:hover {
   background: rgba(0, 166, 166, 0.06);
+}
+
+.table-row-critical {
+  background: linear-gradient(90deg, rgba(178, 58, 50, 0.08), transparent 44%);
 }
 
 tr:last-child td {
@@ -518,16 +559,22 @@ tr:last-child td {
 }
 
 .text-button {
-  border: 0;
-  background: transparent;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--brand-soft);
   color: var(--brand);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  padding: 0;
+  padding: 0 9px;
 }
 
 .text-button:hover {
+  border-color: rgba(0, 166, 166, 0.28);
+  background: var(--accent-soft);
   color: var(--accent);
 }
 
@@ -722,6 +769,56 @@ select:disabled {
   margin: 0;
   color: var(--text);
   font-size: 15px;
+}
+
+.report-insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.report-bars {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.report-bars article {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(140px, 1fr) minmax(110px, auto);
+  align-items: center;
+  gap: 12px;
+}
+
+.report-bars span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.report-bars div {
+  height: 12px;
+  border-radius: 999px;
+  background: #e7eef6;
+  overflow: hidden;
+}
+
+.report-bars i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand), var(--accent));
+}
+
+.report-bars strong {
+  color: var(--text);
+  font-size: 13px;
+  text-align: right;
 }
 
 .segmented-control {
@@ -1133,6 +1230,18 @@ button:disabled {
   word-break: break-all;
 }
 
+.folder-row div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.folder-row strong {
+  color: var(--text);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
 .plain-sections {
   display: grid;
   gap: 14px;
@@ -1141,6 +1250,63 @@ button:disabled {
 .plain-sections p {
   padding: 8px 0;
   border-top: 1px solid var(--border);
+}
+
+.detail-list {
+  display: grid;
+  gap: 8px;
+}
+
+.detail-list article {
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(110px, 0.7fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  padding: 10px 12px;
+}
+
+.detail-list strong,
+.detail-list b {
+  color: var(--text);
+}
+
+.detail-list span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.invoice-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.invoice-timeline article {
+  min-height: 74px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #f7fafc);
+  padding: 12px;
+}
+
+.invoice-timeline span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.invoice-timeline strong {
+  color: var(--text);
+  font-size: 15px;
 }
 
 .attachment-manager {
@@ -1198,7 +1364,10 @@ button:disabled {
   }
 
   .attachment-form,
-  .attachment-row {
+  .attachment-row,
+  .detail-list article,
+  .invoice-timeline,
+  .report-bars article {
     grid-template-columns: 1fr;
   }
 

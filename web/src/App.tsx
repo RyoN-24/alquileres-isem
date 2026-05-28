@@ -1138,6 +1138,7 @@ function renderView(
     return (
       <DataSection
         title="Ficha de proveedores"
+        description="Directorio documental con condiciones de pago, estado y acceso a historial."
         actionLabel="Nuevo proveedor"
         rows={liveData.suppliers}
         notice={liveData.supplierLoadError || undefined}
@@ -1273,6 +1274,7 @@ function renderView(
     return (
       <DataSection
         title="Facturas"
+        description="Control central de vencimientos, prorrogas, pagos y documentos sustentatorios."
         actionLabel="Nueva factura"
         rows={liveData.invoices.map((item) => ({
           id: item.id,
@@ -1598,6 +1600,7 @@ function Metric({
 
 function DataSection<T extends Record<string, unknown>>({
   title,
+  description,
   actionLabel,
   rows,
   columns,
@@ -1607,6 +1610,7 @@ function DataSection<T extends Record<string, unknown>>({
   filterPreset,
 }: {
   title: string
+  description?: string
   actionLabel: string
   rows: T[]
   columns: Array<[string, keyof T]>
@@ -1699,13 +1703,25 @@ function DataSection<T extends Record<string, unknown>>({
     setDateTo('')
     setCustomFilter(null)
   }
+  const totalPen = filteredRows.reduce(
+    (total, row) =>
+      row.currency === 'PEN' && typeof row.amount === 'number' ? total + row.amount : total,
+    0,
+  )
+  const totalUsd = filteredRows.reduce(
+    (total, row) =>
+      row.currency === 'USD' && typeof row.amount === 'number' ? total + row.amount : total,
+    0,
+  )
+  const activeStatusCount = filteredRows.filter((row) => row.status === 'ACTIVO' || row.status === 'PENDIENTE').length
+  const criticalStatusCount = filteredRows.filter((row) => row.status === 'VENCIDA' || row.status === 'OBSERVADA').length
 
   return (
     <section className="work-panel data-panel">
       <div className="section-heading">
         <div>
           <h2>{title}</h2>
-          <p>Listado operativo con filtros base y estados visibles.</p>
+          <p>{description ?? 'Listado operativo con filtros base y estados visibles.'}</p>
         </div>
         <button type="button" className="primary-button" onClick={onAction}>
           <Plus size={17} />
@@ -1714,6 +1730,33 @@ function DataSection<T extends Record<string, unknown>>({
       </div>
 
       {notice && <div className="inline-alert">{notice}</div>}
+
+      <div className="data-summary-strip" aria-label="Resumen del listado">
+        <article>
+          <span>Registros visibles</span>
+          <strong>{filteredRows.length}</strong>
+        </article>
+        <article>
+          <span>Activos / pendientes</span>
+          <strong>{activeStatusCount}</strong>
+        </article>
+        <article>
+          <span>Alertas</span>
+          <strong>{criticalStatusCount}</strong>
+        </article>
+        {currencyOptions.length > 0 && (
+          <>
+            <article>
+              <span>Total PEN</span>
+              <strong>{money(totalPen, 'PEN')}</strong>
+            </article>
+            <article>
+              <span>Total USD</span>
+              <strong>{money(totalUsd, 'USD')}</strong>
+            </article>
+          </>
+        )}
+      </div>
 
       <div className="filters-row">
         <label>
@@ -1798,7 +1841,10 @@ function DataSection<T extends Record<string, unknown>>({
           </thead>
           <tbody>
             {filteredRows.map((row, index) => (
-              <tr key={String(row.id ?? index)}>
+              <tr
+                key={String(row.id ?? index)}
+                className={row.status === 'VENCIDA' || row.status === 'OBSERVADA' ? 'table-row-critical' : ''}
+              >
                 {columns.map(([label, key]) => {
                   const value = row[key]
                   const isStatus = label === 'Estado'
@@ -1971,7 +2017,10 @@ function SupplierDetail({
         </div>
 
         <div className="folder-row">
-          <span>{supplier.folderPath ?? 'Sin carpeta registrada'}</span>
+          <div>
+            <strong>Carpeta documental</strong>
+            <span>{supplier.folderPath ?? 'Sin carpeta registrada'}</span>
+          </div>
           <button
             type="button"
             className="text-button"
@@ -1984,28 +2033,44 @@ function SupplierDetail({
         <div className="plain-sections">
           <section>
             <h3>Equipos</h3>
-            {supplierEquipment.map((item) => (
-              <p key={item.id}>{item.plateOrInternalCode ?? item.description} - {item.status}</p>
-            ))}
+            <div className="detail-list">
+              {supplierEquipment.map((item) => (
+                <article key={item.id}>
+                  <strong>{item.plateOrInternalCode ?? item.description}</strong>
+                  <span>{item.description}</span>
+                  <StatusPill status={item.status} />
+                </article>
+              ))}
+              {supplierEquipment.length === 0 && <p>Sin equipos registrados.</p>}
+            </div>
           </section>
           <section>
             <h3>Facturas pendientes</h3>
-            {pending.map((invoice) => (
-              <p key={invoice.id}>
-                {invoice.invoiceNumber} - {money(Number(invoice.totalAmount), invoice.currency)} - vence{' '}
-                {invoice.dueDate.slice(0, 10)}
-              </p>
-            ))}
-            {pending.length === 0 && <p>Sin facturas pendientes.</p>}
+            <div className="detail-list">
+              {pending.map((invoice) => (
+                <article key={invoice.id}>
+                  <strong>{invoice.invoiceNumber}</strong>
+                  <span>Vence {invoice.dueDate.slice(0, 10)}</span>
+                  <b>{money(Number(invoice.totalAmount), invoice.currency)}</b>
+                  <StatusPill status={invoice.status} />
+                </article>
+              ))}
+              {pending.length === 0 && <p>Sin facturas pendientes.</p>}
+            </div>
           </section>
           <section>
             <h3>Valorizaciones</h3>
-            {supplierValuations.map((valuation) => (
-              <p key={valuation.id}>
-                {valuation.valuationNumber} - {money(Number(valuation.calculatedAmount), valuation.currency)} -{' '}
-                {prettyStatus(valuation.status)}
-              </p>
-            ))}
+            <div className="detail-list">
+              {supplierValuations.map((valuation) => (
+                <article key={valuation.id}>
+                  <strong>{valuation.valuationNumber}</strong>
+                  <span>{valuation.cutoffDate.slice(0, 10)}</span>
+                  <b>{money(Number(valuation.calculatedAmount), valuation.currency)}</b>
+                  <StatusPill status={valuation.status} />
+                </article>
+              ))}
+              {supplierValuations.length === 0 && <p>Sin valorizaciones registradas.</p>}
+            </div>
           </section>
         </div>
       </section>
@@ -3115,7 +3180,10 @@ function InvoiceDetail({
         )}
 
         <div className="folder-row">
-          <span>{invoice.folderPath ?? 'Sin carpeta registrada'}</span>
+          <div>
+            <strong>Carpeta de la factura</strong>
+            <span>{invoice.folderPath ?? 'Sin carpeta registrada'}</span>
+          </div>
           <button
             type="button"
             className="text-button"
@@ -3123,6 +3191,25 @@ function InvoiceDetail({
           >
             Copiar ruta
           </button>
+        </div>
+
+        <div className="invoice-timeline" aria-label="Flujo documental de factura">
+          <article>
+            <span>Emision</span>
+            <strong>{invoice.issueDate.slice(0, 10)}</strong>
+          </article>
+          <article>
+            <span>Vencimiento</span>
+            <strong>{invoice.dueDate.slice(0, 10)}</strong>
+          </article>
+          <article>
+            <span>Pago efectivo</span>
+            <strong>{invoice.paidAt ? invoice.paidAt.slice(0, 10) : 'Pendiente'}</strong>
+          </article>
+          <article>
+            <span>Prorroga</span>
+            <strong>{invoice.paymentExtensionDate ? invoice.paymentExtensionDate.slice(0, 10) : 'Sin prorroga'}</strong>
+          </article>
         </div>
 
         <AttachmentManager
@@ -3538,6 +3625,24 @@ function Reports({
 }) {
   const [reportType, setReportType] = useState<'due-invoices' | 'cost-summary'>('due-invoices')
   const activeCostReport = reportType === 'cost-summary'
+  const dueReportStatus = useMemo(() => {
+    if (!report) return []
+    const totals = new Map<string, number>()
+    report.rows.forEach((row) => totals.set(row.status, (totals.get(row.status) ?? 0) + 1))
+    return Array.from(totals.entries()).map(([status, count]) => ({ status, count }))
+  }, [report])
+  const supplierCostChart = useMemo(() => {
+    if (!costReport) return []
+    return costReport.suppliers
+      .map((row) => ({
+        supplier: row.supplier,
+        amount: row.PEN,
+      }))
+      .filter((row) => row.amount > 0)
+      .sort((first, second) => second.amount - first.amount)
+      .slice(0, 5)
+  }, [costReport])
+  const maxSupplierCost = Math.max(...supplierCostChart.map((row) => row.amount), 1)
 
   const downloadReport = async (format: 'xlsx' | 'pdf') => {
     const response = await fetch(reportDownloadUrl(reportType, format), {
@@ -3595,6 +3700,14 @@ function Reports({
             <Metric icon={BadgeDollarSign} label="Total PEN" value={money(report.totals.PEN, 'PEN')} detail="Por pagar" />
             <Metric icon={BadgeDollarSign} label="Total USD" value={money(report.totals.USD, 'USD')} detail="Por pagar" />
           </div>
+          <div className="report-insight-grid">
+            {dueReportStatus.map((item) => (
+              <article key={item.status}>
+                <span>{prettyStatus(item.status)}</span>
+                <strong>{item.count}</strong>
+              </article>
+            ))}
+          </div>
           <div className="table-wrap">
             <table>
               <thead>
@@ -3635,6 +3748,17 @@ function Reports({
           <div className="metric-grid compact-metrics">
             <Metric icon={BadgeDollarSign} label="Total PEN" value={money(costReport.totals.PEN, 'PEN')} detail="Facturado" />
             <Metric icon={BadgeDollarSign} label="Total USD" value={money(costReport.totals.USD, 'USD')} detail="Facturado" />
+          </div>
+          <div className="report-bars" aria-label="Ranking de costo por proveedor en soles">
+            {supplierCostChart.map((row) => (
+              <article key={row.supplier}>
+                <span>{row.supplier}</span>
+                <div>
+                  <i style={{ width: `${Math.max(8, (row.amount / maxSupplierCost) * 100)}%` }} />
+                </div>
+                <strong>{money(row.amount, 'PEN')}</strong>
+              </article>
+            ))}
           </div>
           <ReportTable
             title="Costo por proveedor"
