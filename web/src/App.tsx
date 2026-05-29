@@ -46,6 +46,7 @@ import {
   getAlertSettings,
   getContractTemplate,
   getCostSummaryReport,
+  getCurrentUser,
   getDashboardSummary,
   getDueInvoicesReport,
   globalSearch,
@@ -115,7 +116,6 @@ type View =
   | 'reportes'
   | 'configuracion'
 
-type InvoiceStatus = 'PENDIENTE' | 'PAGADA' | 'VENCIDA' | 'OBSERVADA'
 type Currency = 'PEN' | 'USD'
 type AttachmentEntityType = 'SUPPLIER' | 'EQUIPMENT' | 'CONTRACT' | 'VALUATION' | 'INVOICE' | 'PAYMENT'
 type TableFilterPreset = {
@@ -128,44 +128,6 @@ type TableFilterPreset = {
   custom?: 'NO_PAGADAS'
 }
 
-type Supplier = {
-  id: string
-  name: string
-  ruc: string
-  contact: string
-  phone: string
-  email: string
-  paymentTerm: number
-  status: 'ACTIVO' | 'INACTIVO'
-}
-
-type Contract = {
-  id: string
-  number: string
-  supplier: string
-  site: string
-  equipment: string
-  startDate: string
-  endDate: string
-  billingMode: 'HORA' | 'DIA'
-  rate: number
-  currency: Currency
-  status: 'ACTIVO' | 'FINALIZADO' | 'CANCELADO'
-}
-
-type Invoice = {
-  id: string
-  number: string
-  supplier: string
-  contract: string
-  valuation: string
-  issueDate: string
-  dueDate: string
-  currency: Currency
-  amount: number
-  status: InvoiceStatus
-}
-
 const navigation: Array<{ id: View; label: string; icon: typeof LayoutDashboard }> = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'proveedores', label: 'Proveedores', icon: Building2 },
@@ -175,120 +137,6 @@ const navigation: Array<{ id: View; label: string; icon: typeof LayoutDashboard 
   { id: 'facturas', label: 'Facturas', icon: FileText },
   { id: 'reportes', label: 'Reportes', icon: FileBarChart },
   { id: 'configuracion', label: 'Configuracion', icon: Settings },
-]
-
-const suppliers: Supplier[] = [
-  {
-    id: 'p-001',
-    name: 'Maquinarias Andinas SAC',
-    ruc: '20604578123',
-    contact: 'Luis Herrera',
-    phone: '987 452 110',
-    email: 'lherrera@andinas.pe',
-    paymentTerm: 30,
-    status: 'ACTIVO',
-  },
-  {
-    id: 'p-002',
-    name: 'Transportes del Sur EIRL',
-    ruc: '20481230991',
-    contact: 'Mariela Torres',
-    phone: '955 320 748',
-    email: 'mtorres@tdsur.pe',
-    paymentTerm: 45,
-    status: 'ACTIVO',
-  },
-  {
-    id: 'p-003',
-    name: 'Servicios Mineros Palomino',
-    ruc: '20190877224',
-    contact: 'Cesar Palomino',
-    phone: '944 128 551',
-    email: 'operaciones@palomino.pe',
-    paymentTerm: 60,
-    status: 'INACTIVO',
-  },
-]
-
-const contracts: Contract[] = [
-  {
-    id: 'c-001',
-    number: 'ISEM-2026-0001',
-    supplier: 'Maquinarias Andinas SAC',
-    site: 'Obra Norte',
-    equipment: 'Excavadora hidraulica 320',
-    startDate: '2026-05-01',
-    endDate: '2026-08-31',
-    billingMode: 'HORA',
-    rate: 180,
-    currency: 'PEN',
-    status: 'ACTIVO',
-  },
-  {
-    id: 'c-002',
-    number: 'ISEM-2026-0002',
-    supplier: 'Transportes del Sur EIRL',
-    site: 'Taller Central',
-    equipment: 'Camioneta 4x4 doble cabina',
-    startDate: '2026-04-15',
-    endDate: '2026-07-15',
-    billingMode: 'DIA',
-    rate: 95,
-    currency: 'USD',
-    status: 'ACTIVO',
-  },
-  {
-    id: 'c-003',
-    number: 'ISEM-2026-0003',
-    supplier: 'Maquinarias Andinas SAC',
-    site: 'Obra Sur',
-    equipment: 'Grupo electrogeno 80 kW',
-    startDate: '2026-03-01',
-    endDate: '2026-05-20',
-    billingMode: 'DIA',
-    rate: 240,
-    currency: 'PEN',
-    status: 'FINALIZADO',
-  },
-]
-
-const invoices: Invoice[] = [
-  {
-    id: 'f-001',
-    number: 'F001-004582',
-    supplier: 'Maquinarias Andinas SAC',
-    contract: 'ISEM-2026-0001',
-    valuation: 'VAL-0001',
-    issueDate: '2026-05-20',
-    dueDate: '2026-05-29',
-    currency: 'PEN',
-    amount: 12240,
-    status: 'PENDIENTE',
-  },
-  {
-    id: 'f-002',
-    number: 'E001-000731',
-    supplier: 'Transportes del Sur EIRL',
-    contract: 'ISEM-2026-0002',
-    valuation: 'VAL-0002',
-    issueDate: '2026-05-10',
-    dueDate: '2026-05-25',
-    currency: 'USD',
-    amount: 1140,
-    status: 'VENCIDA',
-  },
-  {
-    id: 'f-003',
-    number: 'F001-004420',
-    supplier: 'Maquinarias Andinas SAC',
-    contract: 'ISEM-2026-0003',
-    valuation: 'VAL-0003',
-    issueDate: '2026-04-21',
-    dueDate: '2026-05-21',
-    currency: 'PEN',
-    amount: 2400,
-    status: 'PAGADA',
-  },
 ]
 
 const money = (value: number, currency: Currency) =>
@@ -320,11 +168,13 @@ function App() {
     const stored = localStorage.getItem('isem_user')
     return stored ? (JSON.parse(stored) as AuthUser) : null
   })
+  const [isSessionChecking, setIsSessionChecking] = useState(() =>
+    Boolean(localStorage.getItem('isem_token') && localStorage.getItem('isem_user')),
+  )
   const [activeView, setActiveView] = useState<View>('dashboard')
   const [invoiceFilterPreset, setInvoiceFilterPreset] = useState<TableFilterPreset | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [quickForm, setQuickForm] = useState<'contrato' | 'valorizacion' | 'factura' | null>(null)
   const [supplierFormOpen, setSupplierFormOpen] = useState(false)
   const [equipmentFormOpen, setEquipmentFormOpen] = useState(false)
   const [contractFormOpen, setContractFormOpen] = useState(false)
@@ -383,6 +233,34 @@ function App() {
 
   const isSessionError = (error: unknown) =>
     error instanceof Error && error.message.toLowerCase().includes('sesion invalida')
+
+  useEffect(() => {
+    if (!token || !user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsSessionChecking(false)
+      return
+    }
+
+    let isCancelled = false
+    void getCurrentUser(token)
+      .then((result) => {
+        if (isCancelled) return
+        localStorage.setItem('isem_user', JSON.stringify(result.user))
+        setUser(result.user)
+      })
+      .catch(() => {
+        if (!isCancelled) resetSession()
+      })
+      .finally(() => {
+        if (!isCancelled) setIsSessionChecking(false)
+      })
+
+    return () => {
+      isCancelled = true
+    }
+    // Session validation intentionally runs when the stored token changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
 
   const loadSuppliers = async (authToken = token) => {
     if (!authToken) return
@@ -536,6 +414,7 @@ function App() {
   }
 
   useEffect(() => {
+    if (isSessionChecking) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadSuppliers()
     void loadEquipment()
@@ -550,24 +429,24 @@ function App() {
     void loadUsers()
     // The load functions are intentionally omitted to avoid re-running this bootstrapping effect on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, user?.role])
+  }, [token, user?.role, isSessionChecking])
 
   const dashboard = useMemo(() => {
-    const activeContracts = contracts.filter((contract) => contract.status === 'ACTIVO')
-    const pendingInvoices = invoices.filter((invoice) => invoice.status !== 'PAGADA')
+    const activeContracts = apiContracts.filter((contract) => contract.status === 'ACTIVO')
+    const pendingInvoices = apiInvoices.filter((invoice) => invoice.status !== 'PAGADA')
     const sumByCurrency = (currency: Currency) =>
       pendingInvoices
         .filter((invoice) => invoice.currency === currency)
-        .reduce((total, invoice) => total + invoice.amount, 0)
+        .reduce((total, invoice) => total + Number(invoice.totalAmount), 0)
 
     return {
       activeContracts,
       pendingPen: sumByCurrency('PEN'),
       pendingUsd: sumByCurrency('USD'),
-      dueSoon: invoices.filter((invoice) => invoice.status === 'PENDIENTE'),
-      overdue: invoices.filter((invoice) => invoice.status === 'VENCIDA'),
+      dueSoon: apiInvoices.filter((invoice) => invoice.status === 'PENDIENTE'),
+      overdue: apiInvoices.filter((invoice) => invoice.status === 'VENCIDA'),
     }
-  }, [])
+  }, [apiContracts, apiInvoices])
 
   const currentTitle = navigation.find((item) => item.id === activeView)?.label ?? 'Dashboard'
 
@@ -889,6 +768,10 @@ function App() {
     URL.revokeObjectURL(url)
   }
 
+  if (isSessionChecking) {
+    return <SessionLoadingScreen />
+  }
+
   if (!token || !user) {
     return <LoginScreen onLogin={handleLogin} />
   }
@@ -995,7 +878,11 @@ function App() {
         </header>
 
         <section className="content">
-          {renderView(activeView, dashboard, setQuickForm, {
+          {renderView(activeView, dashboard, (type) => {
+            if (type === 'contrato') setContractFormOpen(true)
+            if (type === 'valorizacion') setValuationFormOpen(true)
+            if (type === 'factura') setInvoiceFormOpen(true)
+          }, {
             suppliers: apiSuppliers,
             users: apiUsers,
             equipment: apiEquipment,
@@ -1052,7 +939,6 @@ function App() {
         </section>
       </main>
 
-      {quickForm && <QuickForm type={quickForm} onClose={() => setQuickForm(null)} />}
       {supplierFormOpen && (
         <SupplierForm onClose={() => setSupplierFormOpen(false)} onSubmit={handleCreateSupplier} />
       )}
@@ -1181,11 +1067,11 @@ function App() {
 function renderView(
   view: View,
   dashboard: {
-    activeContracts: Contract[]
+    activeContracts: ApiContract[]
     pendingPen: number
     pendingUsd: number
-    dueSoon: Invoice[]
-    overdue: Invoice[]
+    dueSoon: ApiInvoice[]
+    overdue: ApiInvoice[]
   },
   openQuickForm: (type: 'contrato' | 'valorizacion' | 'factura') => void,
   liveData: {
@@ -1502,11 +1388,11 @@ function Dashboard({
   valuations = [],
 }: {
   dashboard: {
-    activeContracts: Contract[]
+    activeContracts: ApiContract[]
     pendingPen: number
     pendingUsd: number
-    dueSoon: Invoice[]
-    overdue: Invoice[]
+    dueSoon: ApiInvoice[]
+    overdue: ApiInvoice[]
   }
   summary: DashboardSummary | null
   invoices: ApiInvoice[]
@@ -1767,10 +1653,9 @@ function Dashboard({
         </div>
         <div className="alert-list">
           {[...overdue, ...dueSoon].map((invoice) => {
-            const supplierName =
-              typeof invoice.supplier === 'string' ? invoice.supplier : invoice.supplier.businessName
-            const invoiceNumber = 'invoiceNumber' in invoice ? invoice.invoiceNumber : invoice.number
-            const amount = 'totalAmount' in invoice ? Number(invoice.totalAmount) : invoice.amount
+            const supplierName = invoice.supplier.businessName
+            const invoiceNumber = invoice.invoiceNumber
+            const amount = Number(invoice.totalAmount)
             const dueDate = invoice.dueDate.length > 10 ? invoice.dueDate.slice(0, 10) : invoice.dueDate
             const invoiceForDetail = invoices.find((item) => item.id === invoice.id) ?? null
             return (
@@ -2340,8 +2225,8 @@ function NotificationsPanel({
   onOpenInvoiceDetail,
   onClose,
 }: {
-  overdue: Invoice[]
-  dueSoon: Invoice[]
+  overdue: ApiInvoice[]
+  dueSoon: ApiInvoice[]
   invoices: ApiInvoice[]
   onOpenInvoiceDetail: (invoice: ApiInvoice) => Promise<void>
   onClose: () => void
@@ -2359,9 +2244,9 @@ function NotificationsPanel({
         <div className="notifications-list">
           {!hasAlerts && <p className="notifications-empty">No hay alertas activas por el momento.</p>}
           {[...overdue, ...dueSoon].map((invoice) => {
-            const supplierName = invoice.supplier
-            const invoiceNumber = invoice.number
-            const amount = invoice.amount
+            const supplierName = invoice.supplier.businessName
+            const invoiceNumber = invoice.invoiceNumber
+            const amount = Number(invoice.totalAmount)
             const dueDate = invoice.dueDate.length > 10 ? invoice.dueDate.slice(0, 10) : invoice.dueDate
             const invoiceForDetail = invoices.find((item) => item.id === invoice.id) ?? null
 
@@ -2539,9 +2424,29 @@ function SupplierDetail({
   )
 }
 
+function SessionLoadingScreen() {
+  return (
+    <main className="login-page">
+      <div className="login-backdrop" aria-hidden="true" />
+      <section className="login-panel">
+        <div className="login-brand">
+          <div className="login-logo-frame">
+            <img src="/brand/isem-logo.png" alt="ISEM" />
+          </div>
+          <div>
+            <p className="eyebrow">INDUSTRIAS Y SERVICIOS ELECTRO-MECANICOS SRL</p>
+            <h1>Verificando acceso</h1>
+            <span>Validando la sesion guardada en este navegador</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  )
+}
+
 function LoginScreen({ onLogin }: { onLogin: (token: string, user: AuthUser) => void }) {
-  const [email, setEmail] = useState('admin@isem.local')
-  const [password, setPassword] = useState('Admin12345!')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -2592,7 +2497,8 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, user: AuthUser) => 
               <input
                 type="email"
                 value={email}
-                autoComplete="username"
+                autoComplete="off"
+                placeholder="correo@empresa.com"
                 onChange={(event) => setEmail(event.target.value)}
               />
             </span>
@@ -2604,7 +2510,8 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, user: AuthUser) => 
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                autoComplete="current-password"
+                autoComplete="off"
+                placeholder="Ingrese su contrasena"
                 onChange={(event) => setPassword(event.target.value)}
               />
               <button
@@ -2618,7 +2525,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, user: AuthUser) => 
             </span>
           </label>
           {error && <div className="inline-alert">{error}</div>}
-          <button type="submit" className="primary-button" disabled={isSubmitting}>
+          <button type="submit" className="primary-button" disabled={isSubmitting || !email || !password}>
             {isSubmitting ? 'Verificando...' : 'Iniciar sesion'}
             {!isSubmitting && <LogIn size={17} aria-hidden="true" />}
           </button>
@@ -4893,110 +4800,6 @@ function SettingsView({
   )
 }
 
-function QuickForm({
-  type,
-  onClose,
-}: {
-  type: 'contrato' | 'valorizacion' | 'factura'
-  onClose: () => void
-}) {
-  const title = {
-    contrato: 'Nuevo contrato',
-    valorizacion: 'Nueva valorizacion',
-    factura: 'Nueva factura',
-  }[type]
-
-  return (
-    <div className="modal-backdrop" role="presentation">
-      <section className="modal" role="dialog" aria-modal="true" aria-labelledby="quick-form-title">
-        <div className="section-heading">
-          <div>
-            <h2 id="quick-form-title">{title}</h2>
-            <p>Formulario preliminar para validar campos clave.</p>
-          </div>
-          <button type="button" className="icon-button" aria-label="Cerrar formulario" onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
-
-        <form className="quick-form">
-          <label>
-            Proveedor
-            <select>
-              {suppliers.map((supplier) => (
-                <option key={supplier.id}>{supplier.name}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Sede
-            <select>
-              <option>Obra Norte</option>
-              <option>Obra Sur</option>
-              <option>Taller Central</option>
-            </select>
-          </label>
-          {type === 'contrato' && (
-            <>
-              <label>
-                Modalidad
-                <select>
-                  <option>Por hora</option>
-                  <option>Por dia</option>
-                </select>
-              </label>
-              <label>
-                Tarifa
-                <input type="number" defaultValue="180" />
-              </label>
-            </>
-          )}
-          {type === 'valorizacion' && (
-            <>
-              <label>
-                Contrato
-                <select>
-                  {contracts.map((contract) => (
-                    <option key={contract.id}>{contract.number}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Horas o dias
-                <input type="number" defaultValue="8" />
-              </label>
-            </>
-          )}
-          {type === 'factura' && (
-            <>
-              <label>
-                Numero de factura
-                <input defaultValue="F001-" />
-              </label>
-              <label>
-                Adjunto
-                <input type="file" accept="application/pdf,image/*" />
-              </label>
-            </>
-          )}
-          <label className="wide-field">
-            Observaciones
-            <textarea rows={3} placeholder="Notas del registro" />
-          </label>
-          <div className="form-actions">
-            <button type="button" onClick={onClose}>
-              Cancelar
-            </button>
-            <button type="button" className="primary-button" onClick={onClose}>
-              Guardar borrador
-            </button>
-          </div>
-        </form>
-      </section>
-    </div>
-  )
-}
-
 function StatusPill({ status }: { status: string }) {
   const normalized = status.toLowerCase()
   const className = normalized.includes('vencida')
@@ -5017,3 +4820,4 @@ function StatusPill({ status }: { status: string }) {
 }
 
 export default App
+

@@ -421,6 +421,12 @@ export async function login(email: string, password: string) {
   })
 }
 
+export async function getCurrentUser(token: string) {
+  return request<{ user: AuthUser }>('/api/v1/auth/me', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
 export async function listUsers(token: string) {
   return request<{ data: ApiUser[] }>('/api/v1/users', {
     headers: { Authorization: `Bearer ${token}` },
