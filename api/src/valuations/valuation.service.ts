@@ -258,3 +258,34 @@ export async function updateValuation(id: string, input: UpdateValuationInput, u
   return valuation
 }
 
+export async function deleteValuation(id: string, userId?: string) {
+  const valuation = await getValuation(id)
+
+  if (valuation.invoice) {
+    throw new HttpError(
+      422,
+      'VALUATION_ALREADY_INVOICED',
+      'No se puede eliminar una valorizacion que ya tiene factura asociada',
+    )
+  }
+
+  await prisma.$transaction(async (tx) => {
+    // Delete associated attachments
+    await tx.attachment.deleteMany({ where: { entityType: 'VALUATION', entityId: id } })
+    // Delete valuation
+    await tx.valuation.delete({ where: { id } })
+  })
+
+  await prisma.auditLog.create({
+    data: {
+      userId,
+      entityType: 'VALUATION',
+      entityId: id,
+      action: 'DELETE',
+      metadata: { valuationNumber: valuation.valuationNumber },
+    },
+  })
+
+  return { success: true }
+}
+

@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from '../auth/middleware'
 import { asyncHandler } from '../http/async-handler'
 import {
   createInvoice,
+  deleteInvoice,
   getInvoice,
   listInvoices,
   markInvoicePaid,
@@ -58,6 +59,14 @@ invoiceRouter.post(
   asyncHandler(async (req, res) => {
     const input = markInvoicePaidSchema.parse(req.body)
     res.json(await markInvoicePaid(String(req.params.id), input, req.user?.id))
+  }),
+)
+
+invoiceRouter.delete(
+  '/:id',
+  requireRole('ADMIN', 'OPERATIVO'),
+  asyncHandler(async (req, res) => {
+    res.json(await deleteInvoice(String(req.params.id), req.user?.id))
   }),
 )
 

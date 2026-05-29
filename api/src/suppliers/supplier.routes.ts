@@ -6,6 +6,7 @@ import {
   getSupplier,
   listSuppliers,
   updateSupplier,
+  deleteSupplier,
 } from './supplier.service'
 import {
   createSupplierSchema,
@@ -48,5 +49,14 @@ supplierRouter.patch(
   asyncHandler(async (req, res) => {
     const input = updateSupplierSchema.parse(req.body)
     res.json(await updateSupplier(String(req.params.id), input, req.user?.id))
+  }),
+)
+
+supplierRouter.delete(
+  '/:id',
+  requireRole('ADMIN'),
+  asyncHandler(async (req, res) => {
+    await deleteSupplier(String(req.params.id), req.user?.id)
+    res.status(204).end()
   }),
 )

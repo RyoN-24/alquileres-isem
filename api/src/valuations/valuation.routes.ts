@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from '../auth/middleware'
 import { asyncHandler } from '../http/async-handler'
 import {
   createValuation,
+  deleteValuation,
   getValuation,
   listValuations,
   updateValuation,
@@ -47,6 +48,14 @@ valuationRouter.patch(
   asyncHandler(async (req, res) => {
     const input = updateValuationSchema.parse(req.body)
     res.json(await updateValuation(String(req.params.id), input, req.user?.id))
+  }),
+)
+
+valuationRouter.delete(
+  '/:id',
+  requireRole('ADMIN', 'OPERATIVO'),
+  asyncHandler(async (req, res) => {
+    res.json(await deleteValuation(String(req.params.id), req.user?.id))
   }),
 )
 

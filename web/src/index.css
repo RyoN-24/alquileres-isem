@@ -1,41 +1,66 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 
 :root {
-  --bg: #f5f7fb;
+  /* HSL-based harmonious and premium color scheme */
+  --bg: #f8fafc;
   --surface: #ffffff;
-  --surface-raised: #f9fbfd;
-  --surface-strong: #e7eef6;
+  --surface-raised: #fbfcfd;
+  --surface-strong: #f1f5f9;
   --field: #ffffff;
-  --text: #17212f;
-  --muted: #637083;
-  --border: #d9e2ec;
-  --border-strong: #aebdce;
-  --brand: #0f4c81;
+  --text: #0f172a;
+  --muted: #475569;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  
+  /* Text and background variations */
+  --text-strong: #0f172a;
+  --surface-grad-start: #ffffff;
+  --topbar-bg: rgba(255, 255, 255, 0.85);
+  --panel-bg: rgba(255, 255, 255, 0.88);
+  
+  /* Glow Indicators */
+  --glow-cyan: rgba(0, 203, 203, 0.18);
+  --glow-gold: rgba(245, 158, 11, 0.18);
+  --glow-red: rgba(239, 68, 68, 0.18);
+  --glow-green: rgba(16, 185, 129, 0.18);
+
+  /* Brand and Interaction Colors */
+  --brand: #0f4c81;         /* Trustworthy deep slate blue */
   --brand-ink: #ffffff;
-  --brand-soft: rgba(15, 76, 129, 0.12);
-  --accent: #00a6a6;
-  --accent-soft: rgba(0, 166, 166, 0.13);
-  --nav-bg: #08111f;
-  --nav-text: #f7fbff;
-  --nav-muted: #9ba8ba;
-  --nav-active: #13243a;
-  --danger: #b23a32;
-  --warning: #b7791f;
-  --success: #247a52;
-  --info: #2768b2;
-  --focus: #00a6a6;
-  --soft-blue: rgba(39, 104, 178, 0.12);
-  --soft-red: rgba(178, 58, 50, 0.12);
-  --soft-gold: rgba(183, 121, 31, 0.14);
-  --soft-green: rgba(36, 122, 82, 0.12);
-  --chart-teal: #00a6a6;
-  --chart-gold: #c88719;
-  --chart-red: #b23a32;
-  --shadow-soft: 0 24px 70px rgba(8, 17, 31, 0.18);
-  --shadow-tight: 0 14px 36px rgba(8, 17, 31, 0.09);
-  font-family:
-    "IBM Plex Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  --brand-soft: rgba(15, 76, 129, 0.08);
+  --accent: #008b8b;        /* Vibrant customized Dark Cyan/Teal */
+  --accent-soft: rgba(0, 139, 139, 0.08);
+  
+  /* Navigation */
+  --nav-bg: #0b1220;        /* Sleek tech dark slate */
+  --nav-text: #f8fafc;
+  --nav-muted: #94a3b8;
+  --nav-active: #1e293b;
+  
+  /* Semantic Colors */
+  --danger: #ef4444;        /* Radiant modern red */
+  --warning: #f59e0b;       /* Radiant modern orange/amber */
+  --success: #10b981;       /* Radiant modern green */
+  --info: #3b82f6;          /* Radiant modern blue */
+  --focus: #008b8b;
+  
+  /* Soft alert and indicator backdrops */
+  --soft-blue: rgba(59, 130, 246, 0.08);
+  --soft-red: rgba(239, 68, 68, 0.08);
+  --soft-gold: rgba(245, 158, 11, 0.08);
+  --soft-green: rgba(16, 185, 129, 0.08);
+  
+  /* Chart Colors */
+  --chart-teal: #008b8b;
+  --chart-gold: #f59e0b;
+  --chart-red: #ef4444;
+  
+  /* Depth & Elevating shadows */
+  --shadow-soft: 0 20px 40px -15px rgba(15, 23, 42, 0.12), 0 0 50px -10px rgba(15, 23, 42, 0.04);
+  --shadow-tight: 0 4px 12px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+  
+  /* Typography & Defaults */
+  font-family: "Outfit", "IBM Plex Sans", Inter, -apple-system, sans-serif;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -46,17 +71,38 @@
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
-  margin: 0;
   background:
-    linear-gradient(90deg, rgba(217, 226, 236, 0.55) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(217, 226, 236, 0.45) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px),
     var(--bg);
-  background-size: 48px 48px;
+  background-size: 32px 32px;
+}
+
+/* Elegant scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
 }
 
 button,
@@ -64,6 +110,7 @@ input,
 select,
 textarea {
   letter-spacing: 0;
+  font-family: inherit;
 }
 
 button,
@@ -73,4 +120,62 @@ select {
 
 a {
   color: inherit;
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   ALQUILERES ISEM - DARK MODE THEME OVERRIDES
+   ========================================================================== */
+body.dark-theme {
+  --bg: #0b0f19;
+  --surface: #131c2e;
+  --surface-raised: #1a253c;
+  --surface-strong: #22304d;
+  --field: #131c2e;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --border: #1e293b;
+  --border-strong: #334155;
+  
+  /* Brand and Interaction Colors */
+  --brand: #2974b8;         /* Softer, brighter blue for dark background */
+  --brand-soft: rgba(41, 116, 184, 0.15);
+  --accent: #00cbcb;        /* Vibrant customized Dark Cyan/Teal */
+  --accent-soft: rgba(0, 203, 203, 0.15);
+  --focus: #00cbcb;
+  
+  /* Soft alert and indicator backdrops */
+  --soft-blue: rgba(59, 130, 246, 0.12);
+  --soft-red: rgba(239, 68, 68, 0.12);
+  --soft-gold: rgba(245, 158, 11, 0.12);
+  --soft-green: rgba(16, 185, 129, 0.12);
+  
+  /* Chart Colors */
+  --chart-teal: #00cbcb;
+  --chart-gold: #f59e0b;
+  --chart-red: #ef4444;
+  
+  /* Depth & Elevating shadows */
+  --shadow-soft: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 50px -10px rgba(0, 0, 0, 0.4);
+  --shadow-tight: 0 4px 12px -2px rgba(0, 0, 0, 0.3), 0 2px 6px -1px rgba(0, 0, 0, 0.2);
+  
+  /* Text and background variations */
+  --text-strong: #ffffff;
+  --surface-grad-start: var(--surface);
+  --topbar-bg: rgba(19, 28, 46, 0.85);
+  --panel-bg: rgba(19, 28, 46, 0.88);
+  
+  /* Glow Indicators */
+  --glow-cyan: rgba(0, 203, 203, 0.28);
+  --glow-gold: rgba(245, 158, 11, 0.28);
+  --glow-red: rgba(239, 68, 68, 0.28);
+  --glow-green: rgba(16, 185, 129, 0.28);
+}
+
+body.dark-theme {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    var(--bg);
+  background-size: 32px 32px;
 }

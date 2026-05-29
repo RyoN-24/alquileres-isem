@@ -130,3 +130,38 @@ export async function updateSupplier(id: string, input: UpdateSupplierInput, use
 
   return supplier
 }
+
+export async function deleteSupplier(id: string, userId?: string) {
+  const supplier = await prisma.supplier.findUnique({
+    where: { id },
+    include: {
+      equipment: { select: { id: true } },
+      contracts: { select: { id: true } },
+      invoices: { select: { id: true } },
+    },
+  })
+
+  if (!supplier) {
+    throw new HttpError(404, 'SUPPLIER_NOT_FOUND', 'Proveedor no encontrado')
+  }
+
+  if (supplier.equipment.length > 0 || supplier.contracts.length > 0 || supplier.invoices.length > 0) {
+    throw new HttpError(
+      400,
+      'SUPPLIER_HAS_RELATIONS',
+      'No se puede eliminar el proveedor porque tiene equipos, contratos o facturas asociadas'
+    )
+  }
+
+  await prisma.supplier.delete({ where: { id } })
+
+  await prisma.auditLog.create({
+    data: {
+      userId,
+      entityType: 'SUPPLIER',
+      entityId: id,
+      action: 'DELETE',
+      metadata: { businessName: supplier.businessName, ruc: supplier.ruc },
+    },
+  })
+}

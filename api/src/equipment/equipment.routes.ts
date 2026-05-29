@@ -12,6 +12,7 @@ import {
   updateEquipment,
   updateEquipmentType,
   updateSite,
+  deleteEquipment,
 } from './equipment.service'
 import {
   createEquipmentSchema,
@@ -107,5 +108,14 @@ equipmentRouter.patch(
   asyncHandler(async (req, res) => {
     const input = updateEquipmentSchema.parse(req.body)
     res.json(await updateEquipment(String(req.params.id), input, req.user?.id))
+  }),
+)
+
+equipmentRouter.delete(
+  '/:id',
+  requireRole('ADMIN'),
+  asyncHandler(async (req, res) => {
+    await deleteEquipment(String(req.params.id), req.user?.id)
+    res.status(204).end()
   }),
 )

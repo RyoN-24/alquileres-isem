@@ -24,6 +24,8 @@ import {
   Truck,
   Users,
   Wrench,
+  Sun,
+  Moon,
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -68,6 +70,11 @@ import {
   updateSite,
   updateUser,
   uploadAttachment,
+  deleteContract,
+  deleteValuation,
+  deleteInvoice,
+  deleteSupplier,
+  deleteEquipment,
 } from './api'
 import type {
   ApiEquipment,
@@ -294,6 +301,20 @@ const money = (value: number, currency: Currency) =>
 const prettyStatus = (status: string) => status.replaceAll('_', ' ')
 
 function App() {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const stored = localStorage.getItem('isem_theme')
+    return stored === 'dark' ? 'dark' : 'light'
+  })
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.body.classList.add('dark-theme')
+    } else {
+      document.body.classList.remove('dark-theme')
+    }
+    localStorage.setItem('isem_theme', theme)
+  }, [theme])
+
   const [token, setToken] = useState(() => localStorage.getItem('isem_token') ?? '')
   const [user, setUser] = useState<AuthUser | null>(() => {
     const stored = localStorage.getItem('isem_user')
@@ -301,6 +322,7 @@ function App() {
   })
   const [activeView, setActiveView] = useState<View>('dashboard')
   const [invoiceFilterPreset, setInvoiceFilterPreset] = useState<TableFilterPreset | null>(null)
+  const [showNotifications, setShowNotifications] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [quickForm, setQuickForm] = useState<'contrato' | 'valorizacion' | 'factura' | null>(null)
   const [supplierFormOpen, setSupplierFormOpen] = useState(false)
@@ -356,6 +378,7 @@ function App() {
     setContractTemplate(null)
     setSearchResults(null)
     setSelectedSupplierId(null)
+    setShowNotifications(false)
   }
 
   const isSessionError = (error: unknown) =>
@@ -730,6 +753,66 @@ function App() {
     setDetailAttachments(result.data)
   }
 
+  const handleDeleteContract = async (id: string) => {
+    if (!token) return
+    if (!window.confirm('¿Está seguro de que desea eliminar este contrato? Esta acción eliminará también sus documentos adjuntos asociados.')) return
+    try {
+      await deleteContract(token, id)
+      setDetailContract(null)
+      await Promise.all([loadContracts(token), loadDashboard(token)])
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No se pudo eliminar el contrato')
+    }
+  }
+
+  const handleDeleteValuation = async (id: string) => {
+    if (!token) return
+    if (!window.confirm('¿Está seguro de que desea eliminar esta valorización?')) return
+    try {
+      await deleteValuation(token, id)
+      setDetailValuation(null)
+      await Promise.all([loadValuations(token), loadDashboard(token)])
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No se pudo eliminar la valorización')
+    }
+  }
+
+  const handleDeleteInvoice = async (id: string) => {
+    if (!token) return
+    if (!window.confirm('¿Está seguro de que desea eliminar esta factura?')) return
+    try {
+      await deleteInvoice(token, id)
+      setDetailInvoice(null)
+      await Promise.all([loadInvoices(token), loadDashboard(token)])
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No se pudo eliminar la factura')
+    }
+  }
+
+  const handleDeleteSupplier = async (id: string) => {
+    if (!token) return
+    if (!window.confirm('¿Está seguro de que desea eliminar este proveedor?')) return
+    try {
+      await deleteSupplier(token, id)
+      setSelectedSupplierId(null)
+      await Promise.all([loadSuppliers(token), loadDashboard(token)])
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No se pudo eliminar el proveedor')
+    }
+  }
+
+  const handleDeleteEquipment = async (id: string) => {
+    if (!token) return
+    if (!window.confirm('¿Está seguro de que desea eliminar este equipo?')) return
+    try {
+      await deleteEquipment(token, id)
+      setDetailEquipment(null)
+      await Promise.all([loadEquipment(token), loadDashboard(token)])
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'No se pudo eliminar el equipo')
+    }
+  }
+
   const handleGenerateContractPdf = async (contract: ApiContract) => {
     if (!token) return
     await generateContractPdf(token, contract.id)
@@ -876,10 +959,35 @@ function App() {
                 }}
               />
             )}
-            <button type="button" className="alert-button" aria-label="Ver alertas">
+            <button
+              type="button"
+              className="theme-toggle-button"
+              aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button
+              type="button"
+              className="alert-button"
+              aria-label="Ver alertas"
+              onClick={() => setShowNotifications((show) => !show)}
+            >
               <Bell size={18} />
               <span>{dashboard.overdue.length + dashboard.dueSoon.length}</span>
             </button>
+            {showNotifications && (
+              <NotificationsPanel
+                overdue={dashboard.overdue}
+                dueSoon={dashboard.dueSoon}
+                invoices={apiInvoices}
+                onOpenInvoiceDetail={async (invoice) => {
+                  await openInvoiceDetail(invoice)
+                  setShowNotifications(false)
+                }}
+                onClose={() => setShowNotifications(false)}
+              />
+            )}
             <button type="button" className="session-button" onClick={handleLogout}>
               Salir
             </button>
@@ -916,6 +1024,10 @@ function App() {
             onOpenContractDetail: openContractDetail,
             onOpenEquipmentDetail: openEquipmentDetail,
             onOpenValuationDetail: openValuationDetail,
+            onOpenSupplierDetail: setSelectedSupplierId,
+            onDeleteContract: handleDeleteContract,
+            onDeleteValuation: handleDeleteValuation,
+            onDeleteInvoice: handleDeleteInvoice,
             onOpenInvoicesPreset: openInvoicesWithPreset,
             onRunAlerts: handleRunAlerts,
             token,
@@ -997,6 +1109,7 @@ function App() {
           attachments={detailAttachments}
           onUploadAttachment={handleDetailAttachmentUpload}
           onDownloadAttachment={handleAttachmentDownload}
+          onDelete={() => handleDeleteInvoice(detailInvoice.id)}
           onClose={() => {
             setDetailInvoice(null)
             setDetailAttachments([])
@@ -1012,6 +1125,7 @@ function App() {
           onUploadAttachment={handleDetailAttachmentUpload}
           onDownloadAttachment={handleAttachmentDownload}
           onGeneratePdf={handleGenerateContractPdf}
+          onDelete={() => handleDeleteContract(detailContract.id)}
           onClose={() => {
             setDetailContract(null)
             setDetailAttachments([])
@@ -1027,6 +1141,7 @@ function App() {
           attachments={detailAttachments}
           onUploadAttachment={handleDetailAttachmentUpload}
           onDownloadAttachment={handleAttachmentDownload}
+          onDelete={() => handleDeleteEquipment(detailEquipment.id)}
           onClose={() => {
             setDetailEquipment(null)
             setDetailAttachments([])
@@ -1040,6 +1155,7 @@ function App() {
           attachments={detailAttachments}
           onUploadAttachment={handleDetailAttachmentUpload}
           onDownloadAttachment={handleAttachmentDownload}
+          onDelete={() => handleDeleteValuation(detailValuation.id)}
           onClose={() => {
             setDetailValuation(null)
             setDetailAttachments([])
@@ -1054,6 +1170,7 @@ function App() {
           contracts={apiContracts}
           valuations={apiValuations}
           invoices={apiInvoices}
+          onDelete={() => handleDeleteSupplier(selectedSupplierId)}
           onClose={() => setSelectedSupplierId(null)}
         />
       )}
@@ -1100,6 +1217,10 @@ function renderView(
     onOpenContractDetail: (contract: ApiContract) => Promise<void>
     onOpenEquipmentDetail: (equipment: ApiEquipment) => Promise<void>
     onOpenValuationDetail: (valuation: ApiValuation) => Promise<void>
+    onOpenSupplierDetail: (id: string) => void
+    onDeleteContract: (id: string) => Promise<void>
+    onDeleteValuation: (id: string) => Promise<void>
+    onDeleteInvoice: (id: string) => Promise<void>
     onOpenInvoicesPreset: (preset: Omit<TableFilterPreset, 'key'>) => void
     onRunAlerts: () => Promise<void>
     token: string
@@ -1132,6 +1253,9 @@ function renderView(
         onRunAlerts={liveData.onRunAlerts}
         onOpenInvoiceDetail={liveData.onOpenInvoiceDetail}
         onOpenInvoicesPreset={liveData.onOpenInvoicesPreset}
+        equipment={liveData.equipment}
+        contracts={liveData.contracts}
+        valuations={liveData.valuations}
       />
     )
   }
@@ -1145,6 +1269,11 @@ function renderView(
         rows={liveData.suppliers}
         notice={liveData.supplierLoadError || undefined}
         onAction={liveData.onNewSupplier}
+        renderAction={(row) => (
+          <button type="button" className="text-button" onClick={() => liveData.onOpenSupplierDetail(String(row.id))}>
+            Detalle
+          </button>
+        )}
         columns={[
           ['Razon social', 'businessName'],
           ['RUC', 'ruc'],
@@ -1368,6 +1497,9 @@ function Dashboard({
   onRunAlerts,
   onOpenInvoiceDetail,
   onOpenInvoicesPreset,
+  equipment = [],
+  contracts = [],
+  valuations = [],
 }: {
   dashboard: {
     activeContracts: Contract[]
@@ -1382,6 +1514,9 @@ function Dashboard({
   onRunAlerts: () => Promise<void>
   onOpenInvoiceDetail: (invoice: ApiInvoice) => Promise<void>
   onOpenInvoicesPreset: (preset: Omit<TableFilterPreset, 'key'>) => void
+  equipment?: ApiEquipment[]
+  contracts?: ApiContract[]
+  valuations?: ApiValuation[]
 }) {
   const activeContractsTotal = summary?.activeContracts.total ?? dashboard.activeContracts.length
   const pendingPen = summary?.pendingInvoices.PEN ?? dashboard.pendingPen
@@ -1390,6 +1525,38 @@ function Dashboard({
   const overdue = summary?.overdueInvoices ?? dashboard.overdue
   const [activeCurrency, setActiveCurrency] = useState<Currency>('PEN')
   const [hoveredSupplier, setHoveredSupplier] = useState<string | null>(null)
+
+  // Calculate unpaid counts for trend indicators
+  const unpaidPenCount = useMemo(() => {
+    return invoices.filter(
+      (inv) => inv.currency === 'PEN' && inv.status !== 'PAGADA' && inv.status !== 'ANULADA'
+    ).length
+  }, [invoices])
+
+  const unpaidUsdCount = useMemo(() => {
+    return invoices.filter(
+      (inv) => inv.currency === 'USD' && inv.status !== 'PAGADA' && inv.status !== 'ANULADA'
+    ).length
+  }, [invoices])
+
+  const equipmentStats = useMemo(() => {
+    const stats = {
+      DISPONIBLE: 0,
+      EN_OBRA: 0,
+      EN_MANTENIMIENTO: 0,
+      RETIRADO: 0,
+      total: 0
+    }
+    equipment.forEach((item) => {
+      const status = item.status as keyof typeof stats
+      if (status in stats) {
+        stats[status]++
+        stats.total++
+      }
+    })
+    return stats
+  }, [equipment])
+
   const chartData = useMemo(() => {
     const currentMonth = new Date().toISOString().slice(0, 7)
     const totals = new Map<string, number>()
@@ -1416,16 +1583,133 @@ function Dashboard({
           { supplier: 'Sin facturas registradas', amount: 0 },
         ]
   }, [activeCurrency, invoices])
+
   const maxChartAmount = Math.max(...chartData.map((item) => item.amount), 1)
+
+  // Chronologically merged Operational Timeline Feed
+  const timelineEvents = useMemo(() => {
+    type TimelineEvent = {
+      id: string
+      type: 'contract' | 'valuation' | 'invoice' | 'invoice-paid'
+      title: string
+      desc: string
+      date: string
+      rawDate: Date
+      amountStr: string
+    }
+    const events: TimelineEvent[] = []
+
+    // 1. Process Contracts
+    contracts.forEach((contract) => {
+      if (!contract.startDate) return
+      events.push({
+        id: `contract-${contract.id}`,
+        type: 'contract',
+        title: 'Contrato Activado',
+        desc: `Nº ${contract.contractNumber} con ${contract.supplier.businessName} para obra ${contract.site.name}`,
+        date: contract.startDate.slice(0, 10),
+        rawDate: new Date(contract.startDate),
+        amountStr: `${money(Number(contract.rate), contract.currency)} / ${contract.billingMode === 'HORA' ? 'Hr' : 'Día'}`,
+      })
+    })
+
+    // 2. Process Valuations
+    valuations.forEach((valuation) => {
+      if (!valuation.cutoffDate) return
+      events.push({
+        id: `valuation-${valuation.id}`,
+        type: 'valuation',
+        title: 'Valorización Registrada',
+        desc: `Nº ${valuation.valuationNumber} por ${valuation.quantity} ${valuation.contract.billingMode === 'HORA' ? 'Hrs' : 'Días'} de ${valuation.equipment.description}`,
+        date: valuation.cutoffDate.slice(0, 10),
+        rawDate: new Date(valuation.cutoffDate),
+        amountStr: money(Number(valuation.calculatedAmount), valuation.currency),
+      })
+    })
+
+    // 3. Process Invoices
+    invoices.forEach((invoice) => {
+      if (invoice.status === 'ANULADA') return
+      const equipmentDesc = invoice.valuation?.equipment?.description || 'Equipos'
+
+      if (invoice.status === 'PAGADA' && invoice.paidAt) {
+        events.push({
+          id: `invoice-paid-${invoice.id}`,
+          type: 'invoice-paid',
+          title: 'Factura Cancelada',
+          desc: `Nº ${invoice.invoiceNumber} de ${invoice.supplier.businessName} por alquiler de ${equipmentDesc}`,
+          date: invoice.paidAt.slice(0, 10),
+          rawDate: new Date(invoice.paidAt),
+          amountStr: money(Number(invoice.totalAmount), invoice.currency),
+        })
+      } else {
+        events.push({
+          id: `invoice-${invoice.id}`,
+          type: 'invoice',
+          title: invoice.status === 'VENCIDA' ? 'Factura Vencida' : 'Factura Pendiente',
+          desc: `Nº ${invoice.invoiceNumber} de ${invoice.supplier.businessName} por alquiler de ${equipmentDesc}`,
+          date: invoice.issueDate.slice(0, 10),
+          rawDate: new Date(invoice.issueDate),
+          amountStr: money(Number(invoice.totalAmount), invoice.currency),
+        })
+      }
+    })
+
+    // Sort chronologically: most recent first
+    return events
+      .filter((e) => !isNaN(e.rawDate.getTime()))
+      .sort((first, second) => second.rawDate.getTime() - first.rawDate.getTime())
+      .slice(0, 5) // Get latest 5 events
+  }, [contracts, valuations, invoices])
 
   return (
     <div className="dashboard-grid">
+      <div className="dashboard-hero-banner" style={{
+        gridColumn: '1 / -1',
+        height: '160px',
+        borderRadius: '12px',
+        background: `linear-gradient(135deg, rgba(15, 76, 129, 0.95) 0%, rgba(0, 139, 139, 0.85) 100%), url('/brand/dashboard_banner.png') no-repeat center center`,
+        backgroundSize: 'cover',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '32px 40px',
+        color: '#ffffff',
+        boxShadow: 'var(--shadow-tight)',
+        marginBottom: '4px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{ zIndex: 2 }}>
+          <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '6px', letterSpacing: '-0.5px', color: '#ffffff' }}>Panel de Control Financiero</h2>
+          <p style={{ color: '#e2e8f0', fontSize: '14px', fontWeight: '500', opacity: 0.9 }}>
+            Industrias y Servicios Electro-Mecánicos SRL — Gestión de Maquinaria y Equipos
+          </p>
+        </div>
+        <div style={{
+          zIndex: 2,
+          background: 'rgba(255, 255, 255, 0.15)',
+          backdropFilter: 'blur(8px)',
+          borderRadius: '8px',
+          padding: '12px 18px',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          fontSize: '12px',
+          fontWeight: '700',
+          letterSpacing: '0.5px',
+          textTransform: 'uppercase'
+        }}>
+          PERÚ / LIMA
+        </div>
+      </div>
+
       <section className="metric-grid" aria-label="Resumen ejecutivo">
         <Metric
           icon={ClipboardList}
           label="Contratos activos"
           value={activeContractsTotal.toString()}
           detail={`${summary?.activeContracts.bySite.length ?? 0} sedes con contratos vigentes`}
+          tone="info"
+          trend={{ text: 'Saludable', type: 'up' }}
         />
         <button
           type="button"
@@ -1437,6 +1721,8 @@ function Dashboard({
             label="Pendiente PEN"
             value={money(pendingPen, 'PEN')}
             detail="Ver facturas no pagadas"
+            tone="warning"
+            trend={unpaidPenCount > 0 ? { text: `${unpaidPenCount} por pagar`, type: 'alert' } : { text: 'Al corriente', type: 'up' }}
           />
         </button>
         <button
@@ -1449,6 +1735,8 @@ function Dashboard({
             label="Pendiente USD"
             value={money(pendingUsd, 'USD')}
             detail="Ver facturas no pagadas"
+            tone="warning"
+            trend={unpaidUsdCount > 0 ? { text: `${unpaidUsdCount} por pagar`, type: 'alert' } : { text: 'Al corriente', type: 'up' }}
           />
         </button>
         <button
@@ -1462,6 +1750,7 @@ function Dashboard({
             value={overdue.length.toString()}
             detail="Ver facturas vencidas"
             tone="danger"
+            trend={overdue.length > 0 ? { text: 'Acción requerida', type: 'down' } : { text: 'Sin retrasos', type: 'up' }}
           />
         </button>
       </section>
@@ -1557,6 +1846,83 @@ function Dashboard({
         </div>
       </section>
 
+      <section className="work-panel fleet-status-panel">
+        <div className="section-heading">
+          <div>
+            <h2>Estado de la Flota de Equipos</h2>
+            <p>Disponibilidad y distribución operativa de la maquinaria.</p>
+          </div>
+        </div>
+        <div className="fleet-stats-grid">
+          {[
+            { label: 'Disponible', count: equipmentStats.DISPONIBLE, key: 'DISPONIBLE', class: 'success', color: 'var(--success)' },
+            { label: 'En Obra', count: equipmentStats.EN_OBRA, key: 'EN_OBRA', class: 'info', color: 'var(--info)' },
+            { label: 'En Mantenimiento', count: equipmentStats.EN_MANTENIMIENTO, key: 'EN_MANTENIMIENTO', class: 'warning', color: 'var(--warning)' },
+            { label: 'Fuera de Servicio', count: equipmentStats.RETIRADO, key: 'RETIRADO', class: 'danger', color: 'var(--danger)' }
+          ].map((item) => {
+            const percentage = equipmentStats.total > 0 ? Math.round((item.count / equipmentStats.total) * 100) : 0
+            return (
+              <div key={item.key} className={`fleet-card ${item.class}`}>
+                <div className="fleet-card-glow" />
+                <div className="fleet-card-content">
+                  <span className={`status ${item.class}`}>{item.label}</span>
+                  <div className="fleet-card-body">
+                    <div>
+                      <strong className="fleet-card-count">{item.count}</strong>
+                      <span className="fleet-card-unit">{item.count === 1 ? 'unidad' : 'unidades'}</span>
+                    </div>
+                    <div 
+                      className="fleet-donut-chart" 
+                      style={{ 
+                        background: `conic-gradient(${item.color} ${percentage}%, var(--surface-strong) 0)` 
+                      }}
+                    >
+                      <span>{percentage}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="work-panel timeline-panel">
+        <div className="section-heading">
+          <div>
+            <h2>Actividad Operativa Reciente</h2>
+            <p>Línea de tiempo consolidada de contratos, valorizaciones y pagos.</p>
+          </div>
+        </div>
+        <div className="timeline-feed">
+          {timelineEvents.map((event) => {
+            let BadgeIcon = FileText
+            if (event.type === 'contract') BadgeIcon = ClipboardList
+            else if (event.type === 'valuation') BadgeIcon = FileBarChart
+            else if (event.type === 'invoice-paid') BadgeIcon = CheckCircle2
+
+            return (
+              <div key={event.id} className="timeline-item">
+                <div className={`timeline-badge ${event.type}`} title={event.title}>
+                  <BadgeIcon size={13} aria-hidden="true" />
+                </div>
+                <div className="timeline-item-content">
+                  <div className="timeline-item-header">
+                    <span className="timeline-item-title">{event.title}</span>
+                    <span className="timeline-item-date">{event.date}</span>
+                  </div>
+                  <p className="timeline-item-desc">{event.desc}</p>
+                  <span className="timeline-item-amount">{event.amountStr}</span>
+                </div>
+              </div>
+            )
+          })}
+          {timelineEvents.length === 0 && (
+            <p className="empty-message">No se registran eventos operativos recientes.</p>
+          )}
+        </div>
+      </section>
+
       <section className="quick-actions" aria-label="Accesos rapidos">
         <button type="button" onClick={() => openQuickForm('contrato')}>
           <Plus size={18} />
@@ -1581,21 +1947,32 @@ function Metric({
   value,
   detail,
   tone = 'default',
+  trend,
 }: {
   icon: typeof LayoutDashboard
   label: string
   value: string
   detail: string
-  tone?: 'default' | 'danger'
+  tone?: 'default' | 'danger' | 'warning' | 'success' | 'info'
+  trend?: { text: string; type: 'up' | 'down' | 'neutral' | 'alert' }
 }) {
   return (
-    <article className={tone === 'danger' ? 'metric danger' : 'metric'}>
-      <div className="metric-icon">
-        <Icon size={19} aria-hidden="true" />
+    <article className={`metric ${tone}`}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+        <div className="metric-icon">
+          <Icon size={19} aria-hidden="true" />
+        </div>
+        {trend && (
+          <span className={`metric-trend ${trend.type}`}>
+            {trend.text}
+          </span>
+        )}
       </div>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{detail}</small>
+      <div style={{ display: 'grid', gap: '4px' }}>
+        <span>{label}</span>
+        <strong>{value}</strong>
+        <small>{detail}</small>
+      </div>
     </article>
   )
 }
@@ -1956,6 +2333,69 @@ function SearchPanel({
   )
 }
 
+function NotificationsPanel({
+  overdue,
+  dueSoon,
+  invoices,
+  onOpenInvoiceDetail,
+  onClose,
+}: {
+  overdue: Invoice[]
+  dueSoon: Invoice[]
+  invoices: ApiInvoice[]
+  onOpenInvoiceDetail: (invoice: ApiInvoice) => Promise<void>
+  onClose: () => void
+}) {
+  const hasAlerts = overdue.length + dueSoon.length > 0
+
+  return (
+    <>
+      <div className="notifications-backdrop" onClick={onClose} aria-hidden="true" />
+      <div className="notifications-panel">
+        <div className="notifications-header">
+          <h3>Alertas y Notificaciones</h3>
+          <span>({overdue.length + dueSoon.length})</span>
+        </div>
+        <div className="notifications-list">
+          {!hasAlerts && <p className="notifications-empty">No hay alertas activas por el momento.</p>}
+          {[...overdue, ...dueSoon].map((invoice) => {
+            const supplierName = invoice.supplier
+            const invoiceNumber = invoice.number
+            const amount = invoice.amount
+            const dueDate = invoice.dueDate.length > 10 ? invoice.dueDate.slice(0, 10) : invoice.dueDate
+            const invoiceForDetail = invoices.find((item) => item.id === invoice.id) ?? null
+
+            return (
+              <button
+                key={invoice.id}
+                type="button"
+                className={`notification-item ${invoice.status === 'VENCIDA' ? 'danger' : ''}`}
+                onClick={() => {
+                  if (invoiceForDetail) {
+                    void onOpenInvoiceDetail(invoiceForDetail)
+                  }
+                }}
+              >
+                <div className="notification-item-icon">
+                  <AlertTriangle size={15} />
+                </div>
+                <div className="notification-item-content">
+                  <strong>{invoiceNumber}</strong>
+                  <span>{supplierName}</span>
+                  <small>
+                    Vence: {dueDate} • <b>{money(amount, invoice.currency)}</b>
+                  </small>
+                </div>
+                <StatusPill status={invoice.status} />
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </>
+  )
+}
+
 function SearchGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
@@ -1973,6 +2413,7 @@ function SupplierDetail({
   valuations,
   invoices,
   onClose,
+  onDelete,
 }: {
   supplierId: string
   suppliers: ApiSupplier[]
@@ -1981,6 +2422,7 @@ function SupplierDetail({
   valuations: ApiValuation[]
   invoices: ApiInvoice[]
   onClose: () => void
+  onDelete?: () => void
 }) {
   const supplier = suppliers.find((item) => item.id === supplierId)
   if (!supplier) return null
@@ -2007,9 +2449,25 @@ function SupplierDetail({
             <h2 id="supplier-detail-title">{supplier.businessName}</h2>
             <p>{supplier.ruc}</p>
           </div>
-          <button type="button" className="icon-button" aria-label="Cerrar detalle" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {onDelete && (
+              <button
+                type="button"
+                className="text-button"
+                style={{
+                  color: 'var(--danger)',
+                  background: 'var(--soft-red)',
+                  borderColor: 'rgba(239, 68, 68, 0.25)',
+                }}
+                onClick={onDelete}
+              >
+                Eliminar proveedor
+              </button>
+            )}
+            <button type="button" className="icon-button" aria-label="Cerrar detalle" onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="detail-grid">
@@ -2167,7 +2625,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, user: AuthUser) => 
         </form>
         <footer className="login-footer">
           <span>RUC 20220199968</span>
-          <span>America/Lima</span>
+          <span>Perú/Lima</span>
         </footer>
       </section>
     </main>
@@ -3141,6 +3599,7 @@ function InvoiceDetail({
   attachments,
   onUploadAttachment,
   onDownloadAttachment,
+  onDelete,
   onClose,
 }: {
   invoice: ApiInvoice
@@ -3152,6 +3611,7 @@ function InvoiceDetail({
     file: File
   }) => Promise<void>
   onDownloadAttachment: (attachment: ApiAttachment) => Promise<void>
+  onDelete?: () => void
   onClose: () => void
 }) {
   const valuationAmount = Number(invoice.valuation.calculatedAmount)
@@ -3167,9 +3627,25 @@ function InvoiceDetail({
             <h2 id="invoice-detail-title">{invoice.invoiceNumber}</h2>
             <p>{invoice.supplier.businessName} - {invoice.contract.contractNumber}</p>
           </div>
-          <button type="button" className="icon-button" aria-label="Cerrar detalle" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {onDelete && (
+              <button
+                type="button"
+                className="text-button"
+                style={{
+                  color: 'var(--danger)',
+                  background: 'var(--soft-red)',
+                  borderColor: 'rgba(239, 68, 68, 0.25)',
+                }}
+                onClick={onDelete}
+              >
+                Eliminar factura
+              </button>
+            )}
+            <button type="button" className="icon-button" aria-label="Cerrar detalle" onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="detail-grid">
@@ -3245,6 +3721,7 @@ function ContractDetail({
   onUploadAttachment,
   onDownloadAttachment,
   onGeneratePdf,
+  onDelete,
   onClose,
 }: {
   contract: ApiContract
@@ -3259,6 +3736,7 @@ function ContractDetail({
   }) => Promise<void>
   onDownloadAttachment: (attachment: ApiAttachment) => Promise<void>
   onGeneratePdf: (contract: ApiContract) => Promise<void>
+  onDelete?: () => void
   onClose: () => void
 }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
@@ -3290,9 +3768,25 @@ function ContractDetail({
             <h2 id="contract-detail-title">{contract.contractNumber}</h2>
             <p>{contract.supplier.businessName} - {contract.site.name}</p>
           </div>
-          <button type="button" className="icon-button" aria-label="Cerrar detalle" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {onDelete && (
+              <button
+                type="button"
+                className="text-button"
+                style={{
+                  color: 'var(--danger)',
+                  background: 'var(--soft-red)',
+                  borderColor: 'rgba(239, 68, 68, 0.25)',
+                }}
+                onClick={onDelete}
+              >
+                Eliminar contrato
+              </button>
+            )}
+            <button type="button" className="icon-button" aria-label="Cerrar detalle" onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {pendingDocs.length > 0 && (
@@ -3398,6 +3892,7 @@ function EquipmentDetail({
   onUploadAttachment,
   onDownloadAttachment,
   onClose,
+  onDelete,
 }: {
   equipment: ApiEquipment
   contracts: ApiContract[]
@@ -3412,6 +3907,7 @@ function EquipmentDetail({
   }) => Promise<void>
   onDownloadAttachment: (attachment: ApiAttachment) => Promise<void>
   onClose: () => void
+  onDelete?: () => void
 }) {
   const equipmentContracts = contracts.filter((contract) =>
     contract.contractEquipment.some((entry) => entry.equipment.id === equipment.id),
@@ -3437,9 +3933,25 @@ function EquipmentDetail({
             <h2 id="equipment-detail-title">{equipment.plateOrInternalCode ?? equipment.description}</h2>
             <p>{equipment.supplier.businessName} - {equipment.equipmentType.name}</p>
           </div>
-          <button type="button" className="icon-button" aria-label="Cerrar detalle" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {onDelete && (
+              <button
+                type="button"
+                className="text-button"
+                style={{
+                  color: 'var(--danger)',
+                  background: 'var(--soft-red)',
+                  borderColor: 'rgba(239, 68, 68, 0.25)',
+                }}
+                onClick={onDelete}
+              >
+                Eliminar equipo
+              </button>
+            )}
+            <button type="button" className="icon-button" aria-label="Cerrar detalle" onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="detail-grid">
@@ -3511,6 +4023,7 @@ function ValuationDetail({
   attachments,
   onUploadAttachment,
   onDownloadAttachment,
+  onDelete,
   onClose,
 }: {
   valuation: ApiValuation
@@ -3523,6 +4036,7 @@ function ValuationDetail({
     file: File
   }) => Promise<void>
   onDownloadAttachment: (attachment: ApiAttachment) => Promise<void>
+  onDelete?: () => void
   onClose: () => void
 }) {
   const invoiceAmount = invoice ? Number(invoice.totalAmount) : 0
@@ -3541,9 +4055,25 @@ function ValuationDetail({
               {valuation.contract.supplier.businessName} - {valuation.contract.contractNumber}
             </p>
           </div>
-          <button type="button" className="icon-button" aria-label="Cerrar detalle" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {onDelete && (
+              <button
+                type="button"
+                className="text-button"
+                style={{
+                  color: 'var(--danger)',
+                  background: 'var(--soft-red)',
+                  borderColor: 'rgba(239, 68, 68, 0.25)',
+                }}
+                onClick={onDelete}
+              >
+                Eliminar valorización
+              </button>
+            )}
+            <button type="button" className="icon-button" aria-label="Cerrar detalle" onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {hasMismatch && (

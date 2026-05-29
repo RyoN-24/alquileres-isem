@@ -3,6 +3,7 @@ import { requireAuth, requireRole } from '../auth/middleware'
 import { asyncHandler } from '../http/async-handler'
 import {
   createContract,
+  deleteContract,
   generateContractPdf,
   getContract,
   listContracts,
@@ -56,5 +57,13 @@ contractRouter.post(
   requireRole('ADMIN', 'OPERATIVO'),
   asyncHandler(async (req, res) => {
     res.status(201).json(await generateContractPdf(String(req.params.id), req.user?.id))
+  }),
+)
+
+contractRouter.delete(
+  '/:id',
+  requireRole('ADMIN', 'OPERATIVO'),
+  asyncHandler(async (req, res) => {
+    res.json(await deleteContract(String(req.params.id), req.user?.id))
   }),
 )

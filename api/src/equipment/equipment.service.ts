@@ -348,3 +348,37 @@ export async function updateEquipment(id: string, input: UpdateEquipmentInput, u
 
   return equipment
 }
+
+export async function deleteEquipment(id: string, userId?: string) {
+  const equipment = await prisma.equipment.findUnique({
+    where: { id },
+    include: {
+      contractEquipment: { select: { contractId: true } },
+      valuations: { select: { id: true } },
+    },
+  })
+
+  if (!equipment) {
+    throw new HttpError(404, 'EQUIPMENT_NOT_FOUND', 'Equipo no encontrado')
+  }
+
+  if (equipment.contractEquipment.length > 0 || equipment.valuations.length > 0) {
+    throw new HttpError(
+      400,
+      'EQUIPMENT_HAS_RELATIONS',
+      'No se puede eliminar el equipo porque tiene contratos o valorizaciones asociadas'
+    )
+  }
+
+  await prisma.equipment.delete({ where: { id } })
+
+  await prisma.auditLog.create({
+    data: {
+      userId,
+      entityType: 'EQUIPMENT',
+      entityId: id,
+      action: 'DELETE',
+      metadata: { description: equipment.description, plateOrInternalCode: equipment.plateOrInternalCode },
+    },
+  })
+}

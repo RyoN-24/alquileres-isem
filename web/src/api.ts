@@ -680,3 +680,38 @@ export async function globalSearch(token: string, query: string) {
     headers: { Authorization: `Bearer ${token}` },
   })
 }
+
+export async function deleteContract(token: string, id: string) {
+  return request<{ success: boolean }>(`/api/v1/contracts/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function deleteValuation(token: string, id: string) {
+  return request<{ success: boolean }>(`/api/v1/valuations/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function deleteInvoice(token: string, id: string) {
+  return request<{ success: boolean }>(`/api/v1/invoices/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function deleteSupplier(token: string, id: string) {
+  return request<{ success: boolean }>(`/api/v1/suppliers/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
+export async function deleteEquipment(token: string, id: string) {
+  return request<{ success: boolean }>(`/api/v1/equipment/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}

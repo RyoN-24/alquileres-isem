@@ -377,3 +377,28 @@ export async function generateContractPdf(id: string, userId?: string) {
 
   return attachment
 }
+
+export async function deleteContract(id: string, userId?: string) {
+  const contract = await getContract(id)
+
+  await prisma.$transaction(async (tx) => {
+    // Delete contract equipment first
+    await tx.contractEquipment.deleteMany({ where: { contractId: id } })
+    // Delete associated attachments
+    await tx.attachment.deleteMany({ where: { entityType: 'CONTRACT', entityId: id } })
+    // Delete the contract itself
+    await tx.contract.delete({ where: { id } })
+  })
+
+  await prisma.auditLog.create({
+    data: {
+      userId,
+      entityType: 'CONTRACT',
+      entityId: id,
+      action: 'DELETE',
+      metadata: { contractNumber: contract.contractNumber },
+    },
+  })
+
+  return { success: true }
+}

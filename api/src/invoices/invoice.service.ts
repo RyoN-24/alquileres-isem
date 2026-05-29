@@ -296,3 +296,38 @@ export async function markInvoicePaid(id: string, input: MarkInvoicePaidInput, u
 
   return invoice
 }
+
+export async function deleteInvoice(id: string, userId?: string) {
+  const current = await getInvoice(id)
+
+  if (current.status === 'PAGADA') {
+    throw new HttpError(422, 'INVOICE_ALREADY_PAID', 'No se puede eliminar una factura que ya ha sido pagada')
+  }
+
+  await prisma.$transaction(async (tx) => {
+    // Reset valuation status back to PENDIENTE_FACTURA
+    await tx.valuation.update({
+      where: { id: current.valuationId },
+      data: { status: 'PENDIENTE_FACTURA' },
+    })
+
+    // Delete associated alerts
+    await tx.alert.deleteMany({ where: { invoiceId: id } })
+    // Delete associated attachments
+    await tx.attachment.deleteMany({ where: { entityType: 'INVOICE', entityId: id } })
+    // Delete the invoice itself
+    await tx.invoice.delete({ where: { id } })
+  })
+
+  await prisma.auditLog.create({
+    data: {
+      userId,
+      entityType: 'INVOICE',
+      entityId: id,
+      action: 'DELETE',
+      metadata: { invoiceNumber: current.invoiceNumber },
+    },
+  })
+
+  return { success: true }
+}
