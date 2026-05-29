@@ -50,6 +50,40 @@ LOCAL_STORAGE_ROOT=E:/ISEM_ARCHIVOS
 
 No mover manualmente carpetas despues de cargar documentos, porque la base de datos guarda la ruta exacta del archivo. Para backups se debe copiar completa la carpeta `E:/ISEM_ARCHIVOS` junto con la base de datos.
 
+## Produccion en Render + Vercel
+
+La configuracion incluida prioriza que el proyecto funcione ya en Render/Vercel con el backend actual en SQLite persistente. Para eso se agrego `render.yaml` con disco persistente en `/var/data`.
+
+Render API:
+
+- Blueprint/root: usar `render.yaml` desde la raiz del repositorio.
+- Build command: `npm install && npm run prisma:generate && npm run build`.
+- Start command: `npm run start:prod`.
+- Health check: `/health`.
+- Disco persistente: `/var/data`.
+- `DATABASE_URL`: `file:/var/data/isem.db`.
+- `LOCAL_STORAGE_ROOT`: `/var/data/ISEM_ARCHIVOS`.
+- `APP_URL`: URL final de Vercel.
+- `APP_URLS`: dominios adicionales separados por coma, por ejemplo previews de Vercel.
+
+Vercel web:
+
+- Root/build desde repo raiz con `vercel.json`.
+- Variable obligatoria: `VITE_API_URL=https://tu-api-render.onrender.com`.
+- Si `VITE_API_URL` no existe, la web solo intentara usar backend local en `localhost` o `127.0.0.1`.
+
+Comandos de verificacion local antes de subir:
+
+```powershell
+cd "E:\PROYECTOS ANTIGRAVITY\ALQUILERES ISEM\api"
+npm test
+npm run build
+
+cd "E:\PROYECTOS ANTIGRAVITY\ALQUILERES ISEM\web"
+npm run lint
+npm run build
+```
+
 ## Produccion en servidor propio
 
 Recomendacion minima:
@@ -64,7 +98,7 @@ Recomendacion minima:
 
 Pasos generales:
 
-1. Crear base PostgreSQL.
+1. Crear base de datos final o usar SQLite con carpeta persistente.
 2. Cambiar `DATABASE_URL` en `api/.env`.
 3. Usar un `JWT_SECRET` largo y privado.
 4. Definir `APP_URL` con el dominio real del frontend.
@@ -73,10 +107,12 @@ Pasos generales:
 7. Crear usuario administrador definitivo.
 8. Probar carga/descarga de adjuntos desde una red externa.
 
-## Supabase futuro
+## PostgreSQL / Supabase futuro
 
 Cuando se migre a Supabase:
 
+- Cambiar el provider de Prisma de `sqlite` a `postgresql`.
+- Crear una migracion limpia para PostgreSQL o usar `prisma db push` en una base nueva controlada.
 - Usar Supabase Postgres como `DATABASE_URL`.
 - Mantener adjuntos localmente si el cliente necesita carpetas visibles.
 - Si se migra storage a Supabase Storage, crear una capa de almacenamiento cloud y decidir si se mantiene una copia local visible.
@@ -119,4 +155,3 @@ Resultado esperado actual:
 - Web build: pasa.
 - Web audit high: sin vulnerabilidades.
 - API audit high: sin vulnerabilidades altas; queda advertencia moderada transitiva de `exceljs/uuid`.
-

@@ -1,4 +1,20 @@
-const API_URL = import.meta.env.VITE_API_URL ?? `http://${window.location.hostname}:4000`
+function resolveApiUrl() {
+  const configuredUrl = import.meta.env.VITE_API_URL?.trim()
+  if (configuredUrl) return configuredUrl.replace(/\/$/, '')
+
+  const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  if (isLocalHost) return `http://${window.location.hostname}:4000`
+
+  return ''
+}
+
+const API_URL = resolveApiUrl()
+
+function assertApiUrl() {
+  if (!API_URL) {
+    throw new Error('Falta configurar VITE_API_URL con la URL publica del backend en Render')
+  }
+}
 
 export type AuthUser = {
   id: string
@@ -342,6 +358,7 @@ export type ApiAttachment = {
 }
 
 async function request<T>(path: string, options: RequestInit = {}) {
+  assertApiUrl()
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
@@ -361,6 +378,7 @@ async function request<T>(path: string, options: RequestInit = {}) {
 }
 
 async function uploadRequest<T>(path: string, token: string, formData: FormData) {
+  assertApiUrl()
   const response = await fetch(`${API_URL}${path}`, {
     method: 'POST',
     headers: {
@@ -380,6 +398,7 @@ async function uploadRequest<T>(path: string, token: string, formData: FormData)
 }
 
 async function downloadRequest(path: string, token: string) {
+  assertApiUrl()
   const response = await fetch(`${API_URL}${path}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -672,6 +691,7 @@ export async function getCostSummaryReport(token: string) {
 }
 
 export function reportDownloadUrl(report: 'due-invoices' | 'cost-summary', format: 'xlsx' | 'pdf') {
+  assertApiUrl()
   return `${API_URL}/api/v1/reports/${report}?format=${format}`
 }
 

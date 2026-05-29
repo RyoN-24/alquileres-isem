@@ -4,7 +4,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import { authRouter } from './auth/auth.routes'
 import { attachmentRouter } from './attachments/attachment.routes'
-import { env } from './config/env'
+import { env, isAllowedAppOrigin } from './config/env'
 import { contractRouter } from './contracts/contract.routes'
 import { dashboardRouter } from './dashboard/dashboard.routes'
 import { equipmentRouter } from './equipment/equipment.routes'
@@ -25,13 +25,14 @@ export function createApp() {
   app.use(helmet())
   app.use(
     cors({
-      origin: [
-        env.APP_URL,
-        'http://localhost:5174',
-        'http://127.0.0.1:5174',
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-      ],
+      origin(origin, callback) {
+        if (isAllowedAppOrigin(origin)) {
+          callback(null, true)
+          return
+        }
+
+        callback(new Error(`Origen no permitido por CORS: ${origin}`))
+      },
       credentials: true,
     })
   )
