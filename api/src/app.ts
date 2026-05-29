@@ -23,7 +23,18 @@ export function createApp() {
   const app = express()
 
   app.use(helmet())
-  app.use(cors({ origin: env.APP_URL, credentials: true }))
+  app.use(
+    cors({
+      origin: [
+        env.APP_URL,
+        'http://localhost:5174',
+        'http://127.0.0.1:5174',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+      ],
+      credentials: true,
+    })
+  )
   app.use(express.json({ limit: '1mb' }))
   app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 
