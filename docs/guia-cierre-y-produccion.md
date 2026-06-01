@@ -52,7 +52,7 @@ No mover manualmente carpetas despues de cargar documentos, porque la base de da
 
 ## Produccion en Render + Vercel
 
-La configuracion incluida prioriza que el proyecto funcione ya en Render/Vercel con el backend actual en SQLite persistente. Para eso se agrego `render.yaml` con disco persistente en `/var/data`.
+La configuracion incluida prioriza que el proyecto funcione ya en Render/Vercel con el backend actual en SQLite usando `/tmp`, porque Render Free no permite escribir en rutas como `/var/data` si no existe un disco persistente montado.
 
 Render API:
 
@@ -60,9 +60,8 @@ Render API:
 - Build command: `npm install && npm run prisma:generate && npm run build`.
 - Start command: `npm run start:prod`.
 - Health check: `/health`.
-- Disco persistente: `/var/data`.
-- `DATABASE_URL`: `file:/var/data/isem.db`.
-- `LOCAL_STORAGE_ROOT`: `/var/data/ISEM_ARCHIVOS`.
+- `DATABASE_URL`: `file:/tmp/isem.db`.
+- `LOCAL_STORAGE_ROOT`: `/tmp/ISEM_ARCHIVOS`.
 - `APP_URL`: URL final de Vercel.
 - `APP_URLS`: dominios adicionales separados por coma, por ejemplo previews de Vercel.
 
@@ -83,6 +82,8 @@ cd "E:\PROYECTOS ANTIGRAVITY\ALQUILERES ISEM\web"
 npm run lint
 npm run build
 ```
+
+Importante: `/tmp` es temporal. En Render Free la app levanta, pero la base y adjuntos pueden perderse si el servicio se reinicia. Para datos reales se debe usar Render Disk pagado, PostgreSQL/Supabase o un servidor propio con almacenamiento persistente.
 
 ## Produccion en servidor propio
 

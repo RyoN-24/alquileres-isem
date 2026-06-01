@@ -17,7 +17,7 @@ services:
       - key: APP_URLS
         sync: false
       - key: DATABASE_URL
-        value: file:/var/data/isem.db
+        value: file:/tmp/isem.db
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
@@ -25,12 +25,8 @@ services:
       - key: FILE_STORAGE_MODE
         value: LOCAL_VISIBLE
       - key: LOCAL_STORAGE_ROOT
-        value: /var/data/ISEM_ARCHIVOS
+        value: /tmp/ISEM_ARCHIVOS
       - key: ALERT_DAYS_BEFORE_DUE
         value: 3
       - key: CONTRACT_ALERT_DAYS_BEFORE_DUE
         value: 3
-    disk:
-      name: isem-data
-      mountPath: /var/data
-      sizeGB: 5
