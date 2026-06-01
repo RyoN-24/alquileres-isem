@@ -57,7 +57,7 @@ const SHEETS: Array<{ name: ImportSection; headers: string[]; sample: unknown[][
   {
     name: 'Equipos',
     headers: ['rucProveedor', 'tipoEquipo', 'descripcion', 'marca', 'modelo', 'anio', 'placaCodigo', 'sede', 'estado'],
-    sample: [['20600000001', 'Maquinaria pesada', 'Excavadora 320', 'CAT', '320', 2020, 'ABC-123', 'Obra Norte', 'EN_OBRA']],
+    sample: [['20600000001', 'Maquinaria pesada', 'Excavadora 320', 'CAT', '320', 2020, 'ABC-123', 'Toquepala', 'EN_OBRA']],
   },
   {
     name: 'Contratos',
@@ -75,7 +75,7 @@ const SHEETS: Array<{ name: ImportSection; headers: string[]; sample: unknown[][
       'estado',
       'notas',
     ],
-    sample: [['ISEM-2026-001', '20600000001', 'ABC-123', 'Obra Norte', '2026-05-01', '2026-05-31', 'DIA', 850, 'PEN', 30, 'ACTIVO', '']],
+    sample: [['ISEM-2026-001', '20600000001', 'ABC-123', 'Toquepala', '2026-05-01', '2026-05-31', 'DIA', 850, 'PEN', 30, 'ACTIVO', '']],
   },
   {
     name: 'Valorizaciones',

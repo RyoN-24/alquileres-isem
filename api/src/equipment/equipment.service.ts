@@ -18,6 +18,26 @@ type UpdateEquipmentTypeInput = z.infer<typeof updateEquipmentTypeSchema>
 type CreateSiteInput = z.infer<typeof createSiteSchema>
 type UpdateSiteInput = z.infer<typeof updateSiteSchema>
 
+const OFFICIAL_SITE_NAMES = ['Toquepala', 'Cuajone', 'Tacna', 'Lima', 'Otros']
+const OFFICIAL_SITE_ORDER = new Map(OFFICIAL_SITE_NAMES.map((name, index) => [name, index]))
+
+function resolveOfficialSiteName(name: string) {
+  const normalized = name.trim().toLocaleLowerCase('es-PE')
+  return OFFICIAL_SITE_NAMES.find((siteName) => siteName.toLocaleLowerCase('es-PE') === normalized)
+}
+
+function ensureOfficialSiteName(name: string) {
+  const officialName = resolveOfficialSiteName(name)
+  if (!officialName) {
+    throw new HttpError(
+      422,
+      'SITE_NOT_ALLOWED',
+      'Las sedes permitidas son Toquepala, Cuajone, Tacna, Lima y Otros'
+    )
+  }
+  return officialName
+}
+
 export async function listEquipment(params: {
   q?: string
   supplierId?: string
@@ -73,9 +93,10 @@ export async function listEquipmentTypes() {
 }
 
 export async function listSites() {
-  return prisma.site.findMany({
-    orderBy: { name: 'asc' },
+  const sites = await prisma.site.findMany({
+    where: { name: { in: OFFICIAL_SITE_NAMES } },
   })
+  return sites.sort((a, b) => (OFFICIAL_SITE_ORDER.get(a.name) ?? 999) - (OFFICIAL_SITE_ORDER.get(b.name) ?? 999))
 }
 
 async function getDefaultCompanyId() {
@@ -154,8 +175,9 @@ export async function updateEquipmentType(id: string, input: UpdateEquipmentType
 
 export async function createSite(input: CreateSiteInput, userId?: string) {
   const companyId = await getDefaultCompanyId()
+  const name = ensureOfficialSiteName(input.name)
   const existing = await prisma.site.findFirst({
-    where: { companyId, name: input.name },
+    where: { companyId, name },
   })
   if (existing) {
     if (existing.isActive) {
@@ -180,7 +202,7 @@ export async function createSite(input: CreateSiteInput, userId?: string) {
   const site = await prisma.site.create({
     data: {
       companyId,
-      name: input.name,
+      name,
       address: input.address,
     },
   })
@@ -203,6 +225,7 @@ export async function updateSite(id: string, input: UpdateSiteInput, userId?: st
   }
 
   if (input.name) {
+    input.name = ensureOfficialSiteName(input.name)
     const existing = await prisma.site.findFirst({
       where: { companyId: current.companyId, name: input.name, NOT: { id } },
     })

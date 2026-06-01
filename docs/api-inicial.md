@@ -178,7 +178,7 @@ Respuesta sugerida:
   "activeContracts": {
     "total": 12,
     "bySite": [
-      { "siteId": "uuid", "siteName": "Obra Norte", "total": 4 }
+      { "siteId": "uuid", "siteName": "Toquepala", "total": 4 }
     ]
   },
   "pendingInvoices": {
@@ -205,4 +205,3 @@ Parametros comunes:
 - `to`
 - `siteId`
 - `format=json|xlsx|pdf`
-

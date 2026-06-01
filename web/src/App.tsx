@@ -36,7 +36,6 @@ import {
   createEquipmentType,
   createContract,
   createInvoice,
-  createSite,
   createUser,
   createValuation,
   createSupplier,
@@ -499,12 +498,6 @@ function App() {
     await loadEquipment(token)
   }
 
-  const handleCreateSite = async (input: { name: string; address?: string }) => {
-    if (!token) return
-    await createSite(token, input)
-    await loadEquipment(token)
-  }
-
   const handleToggleSite = async (id: string, isActive: boolean) => {
     if (!token) return
     await updateSite(token, id, { isActive })
@@ -924,7 +917,6 @@ function App() {
             invoiceFilterPreset,
             onCreateEquipmentType: handleCreateEquipmentType,
             onToggleEquipmentType: handleToggleEquipmentType,
-            onCreateSite: handleCreateSite,
             onToggleSite: handleToggleSite,
             alertSettings,
             onUpdateAlertSettings: handleUpdateAlertSettings,
@@ -1116,7 +1108,6 @@ function renderView(
     invoiceFilterPreset: TableFilterPreset | null
     onCreateEquipmentType: (name: string) => Promise<void>
     onToggleEquipmentType: (id: string, isActive: boolean) => Promise<void>
-    onCreateSite: (input: { name: string; address?: string }) => Promise<void>
     onToggleSite: (id: string, isActive: boolean) => Promise<void>
     alertSettings: AlertSettings | null
     onUpdateAlertSettings: (input: AlertSettings) => Promise<void>
@@ -1358,7 +1349,6 @@ function renderView(
       sites={liveData.sites}
       onCreateEquipmentType={liveData.onCreateEquipmentType}
       onToggleEquipmentType={liveData.onToggleEquipmentType}
-      onCreateSite={liveData.onCreateSite}
       onToggleSite={liveData.onToggleSite}
       alertSettings={liveData.alertSettings}
       onUpdateAlertSettings={liveData.onUpdateAlertSettings}
@@ -4293,7 +4283,6 @@ function SettingsView({
   sites,
   onCreateEquipmentType,
   onToggleEquipmentType,
-  onCreateSite,
   onToggleSite,
   alertSettings,
   onUpdateAlertSettings,
@@ -4312,7 +4301,6 @@ function SettingsView({
   sites: ApiSite[]
   onCreateEquipmentType: (name: string) => Promise<void>
   onToggleEquipmentType: (id: string, isActive: boolean) => Promise<void>
-  onCreateSite: (input: { name: string; address?: string }) => Promise<void>
   onToggleSite: (id: string, isActive: boolean) => Promise<void>
   alertSettings: AlertSettings | null
   onUpdateAlertSettings: (input: AlertSettings) => Promise<void>
@@ -4323,7 +4311,6 @@ function SettingsView({
 }) {
   const [userError, setUserError] = useState('')
   const [equipmentTypeError, setEquipmentTypeError] = useState('')
-  const [siteError, setSiteError] = useState('')
   const [alertError, setAlertError] = useState('')
   const [templateError, setTemplateError] = useState('')
   const [templateValue, setTemplateValue] = useState(contractTemplate?.template ?? '')
@@ -4332,7 +4319,6 @@ function SettingsView({
   const [selectedImportFile, setSelectedImportFile] = useState<File | null>(null)
   const [isSubmittingUser, setIsSubmittingUser] = useState(false)
   const [isSubmittingType, setIsSubmittingType] = useState(false)
-  const [isSubmittingSite, setIsSubmittingSite] = useState(false)
   const [isSubmittingAlerts, setIsSubmittingAlerts] = useState(false)
   const [isSubmittingTemplate, setIsSubmittingTemplate] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
@@ -4386,26 +4372,6 @@ function SettingsView({
       setEquipmentTypeError(error instanceof Error ? error.message : 'No se pudo crear el tipo')
     } finally {
       setIsSubmittingType(false)
-    }
-  }
-
-  const handleCreateSite = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const form = event.currentTarget
-    const formData = new FormData(form)
-    const name = String(formData.get('name') ?? '').trim()
-    const address = String(formData.get('address') ?? '').trim()
-    if (!name) return
-
-    setIsSubmittingSite(true)
-    setSiteError('')
-    try {
-      await onCreateSite({ name, address: address || undefined })
-      form.reset()
-    } catch (error) {
-      setSiteError(error instanceof Error ? error.message : 'No se pudo crear la sede')
-    } finally {
-      setIsSubmittingSite(false)
     }
   }
 
@@ -4734,20 +4700,6 @@ function SettingsView({
           </div>
           <Building2 size={20} aria-hidden="true" />
         </div>
-        <form className="settings-form" onSubmit={handleCreateSite}>
-          <label>
-            Nueva sede
-            <input name="name" placeholder="Ej. Obra Centro" required />
-          </label>
-          <label>
-            Direccion
-            <input name="address" placeholder="Opcional" />
-          </label>
-          <button type="submit" className="primary-button" disabled={isSubmittingSite}>
-            {isSubmittingSite ? 'Guardando...' : 'Agregar'}
-          </button>
-        </form>
-        {siteError && <div className="inline-alert">{siteError}</div>}
         <ul className="plain-list">
           {sites.map((site) => (
             <li key={site.id}>

@@ -41,19 +41,29 @@ async function main() {
     },
   })
 
+  const officialSites = ['Toquepala', 'Cuajone', 'Tacna', 'Lima', 'Otros']
+
   await Promise.all(
-    ['Taller Central', 'Obra Norte', 'Obra Sur'].map((name) =>
+    officialSites.map((name) =>
       prisma.site.upsert({
         where: { id: `seed-${name.toLowerCase().replace(/\s+/g, '-')}` },
-        update: {},
+        update: { name, isActive: true },
         create: {
           id: `seed-${name.toLowerCase().replace(/\s+/g, '-')}`,
           companyId: company.id,
           name,
+          isActive: true,
         },
       }),
     ),
   )
+
+  await prisma.site.updateMany({
+    where: {
+      id: { in: ['seed-taller-central', 'seed-obra-norte', 'seed-obra-sur'] },
+    },
+    data: { isActive: false },
+  })
 
   await Promise.all(
     ['Maquinaria pesada', 'Vehiculo liviano', 'Otro'].map((name) =>
@@ -77,4 +87,3 @@ main()
     await prisma.$disconnect()
     process.exit(1)
   })
-
