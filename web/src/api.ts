@@ -1,6 +1,17 @@
 function resolveApiUrl() {
   const configuredUrl = import.meta.env.VITE_API_URL?.trim()
-  if (configuredUrl) return configuredUrl.replace(/\/$/, '')
+  if (configuredUrl) {
+    const normalizedUrl = configuredUrl.replace(/\/$/, '')
+    if (
+      normalizedUrl.includes('tu-api-render') ||
+      normalizedUrl.includes('tu-dominio') ||
+      normalizedUrl.includes('example.com')
+    ) {
+      return ''
+    }
+
+    return normalizedUrl
+  }
 
   const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname)
   if (isLocalHost) return `http://${window.location.hostname}:4000`
@@ -10,10 +21,17 @@ function resolveApiUrl() {
 
 const API_URL = resolveApiUrl()
 
-function assertApiUrl() {
+export function getApiConfigurationError() {
   if (!API_URL) {
-    throw new Error('Falta configurar VITE_API_URL con la URL publica del backend en Render')
+    return 'Falta configurar VITE_API_URL con la URL publica real del backend en Render'
   }
+
+  return ''
+}
+
+function assertApiUrl() {
+  const error = getApiConfigurationError()
+  if (error) throw new Error(error)
 }
 
 export type AuthUser = {

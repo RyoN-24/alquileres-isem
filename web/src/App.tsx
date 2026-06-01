@@ -44,6 +44,7 @@ import {
   downloadImportTemplate,
   generateContractPdf,
   getAlertSettings,
+  getApiConfigurationError,
   getContractTemplate,
   getCostSummaryReport,
   getCurrentUser,
@@ -2447,7 +2448,7 @@ function SessionLoadingScreen() {
 function LoginScreen({ onLogin }: { onLogin: (token: string, user: AuthUser) => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(getApiConfigurationError())
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
