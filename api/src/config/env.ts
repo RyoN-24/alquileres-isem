@@ -3,21 +3,41 @@ import { z } from 'zod'
 
 dotenv.config()
 
+const emptyStringToUndefined = (value: unknown) => {
+  if (typeof value === 'string' && value.trim() === '') return undefined
+  return value
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
-  APP_URL: z.string().url().default('http://127.0.0.1:5174'),
-  APP_URLS: z.string().optional(),
-  DATABASE_URL: z.string().min(1),
-  JWT_SECRET: z.string().min(24),
-  JWT_EXPIRES_IN: z.string().default('8h'),
+  APP_URL: z.preprocess(
+    emptyStringToUndefined,
+    z.string().url().default('http://127.0.0.1:5174'),
+  ),
+  APP_URLS: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  DATABASE_URL: z.preprocess(emptyStringToUndefined, z.string().min(1)),
+  JWT_SECRET: z.preprocess(emptyStringToUndefined, z.string().min(24)),
+  JWT_EXPIRES_IN: z.preprocess(emptyStringToUndefined, z.string().default('8h')),
   FILE_STORAGE_MODE: z.enum(['LOCAL_VISIBLE', 'CLOUD_STORAGE']).default('LOCAL_VISIBLE'),
-  LOCAL_STORAGE_ROOT: z.string().min(1).default('E:/ISEM_ARCHIVOS'),
+  LOCAL_STORAGE_ROOT: z.preprocess(
+    emptyStringToUndefined,
+    z.string().min(1).default('E:/ISEM_ARCHIVOS'),
+  ),
   ALERT_DAYS_BEFORE_DUE: z.coerce.number().int().positive().default(3),
   CONTRACT_ALERT_DAYS_BEFORE_DUE: z.coerce.number().int().positive().default(3),
 })
 
-export const env = envSchema.parse(process.env)
+const parsedEnv = envSchema.safeParse(process.env)
+
+if (!parsedEnv.success) {
+  const issues = parsedEnv.error.issues
+    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+    .join('; ')
+  throw new Error(`Configuracion de entorno invalida: ${issues}`)
+}
+
+export const env = parsedEnv.data
 
 export const allowedAppOrigins = Array.from(
   new Set([
