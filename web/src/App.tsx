@@ -146,6 +146,20 @@ const money = (value: number, currency: Currency) =>
     minimumFractionDigits: 2,
   }).format(value)
 
+function buildContractSummaryItems(rows: Array<Record<string, unknown>>) {
+  const activeContracts = rows.filter((row) => row.status === 'ACTIVO').length
+  const sum = (key: string) =>
+    rows.reduce((total, row) => total + (typeof row[key] === 'number' ? row[key] : 0), 0)
+  return [
+    { label: 'Contratos visibles', value: rows.length },
+    { label: 'Activos', value: activeContracts },
+    { label: 'Valorizado PEN', value: money(sum('valuationPen'), 'PEN') },
+    { label: 'Valorizado USD', value: money(sum('valuationUsd'), 'USD') },
+    { label: 'Pendiente PEN', value: money(sum('pendingPen'), 'PEN') },
+    { label: 'Pendiente USD', value: money(sum('pendingUsd'), 'USD') },
+  ]
+}
+
 const prettyStatus = (status: string) => status.replaceAll('_', ' ')
 
 function App() {
@@ -1206,18 +1220,37 @@ function renderView(
       <DataSection
         title="Contratos de servicio"
         actionLabel="Nuevo contrato"
-        rows={liveData.contracts.map((item) => ({
-          id: item.id,
-          number: item.contractNumber,
-          supplier: item.supplier.businessName,
-          site: item.site.name,
-          equipment: item.contractEquipment
-            .map((entry) => entry.equipment.plateOrInternalCode ?? entry.equipment.description)
-            .join(', '),
-          rate: Number(item.rate),
-          currency: item.currency,
-          status: item.status,
-        }))}
+        rows={liveData.contracts.map((item) => {
+          const contractValuations = liveData.valuations.filter((valuation) => valuation.contractId === item.id)
+          const contractPendingInvoices = liveData.invoices.filter(
+            (invoice) => invoice.contractId === item.id && invoice.status !== 'PAGADA',
+          )
+          return {
+            id: item.id,
+            number: item.contractNumber,
+            supplier: item.supplier.businessName,
+            site: item.site.name,
+            equipment: item.contractEquipment
+              .map((entry) => entry.equipment.plateOrInternalCode ?? entry.equipment.description)
+              .join(', '),
+            rate: Number(item.rate),
+            currency: item.currency,
+            status: item.status,
+            valuationPen: contractValuations
+              .filter((valuation) => valuation.currency === 'PEN')
+              .reduce((total, valuation) => total + Number(valuation.calculatedAmount), 0),
+            valuationUsd: contractValuations
+              .filter((valuation) => valuation.currency === 'USD')
+              .reduce((total, valuation) => total + Number(valuation.calculatedAmount), 0),
+            pendingPen: contractPendingInvoices
+              .filter((invoice) => invoice.currency === 'PEN')
+              .reduce((total, invoice) => total + Number(invoice.totalAmount), 0),
+            pendingUsd: contractPendingInvoices
+              .filter((invoice) => invoice.currency === 'USD')
+              .reduce((total, invoice) => total + Number(invoice.totalAmount), 0),
+          }
+        })}
+        summaryItems={buildContractSummaryItems}
         notice={liveData.contractLoadError || undefined}
         onAction={liveData.onNewContract}
         renderAction={(row) => {
@@ -1863,6 +1896,7 @@ function DataSection<T extends Record<string, unknown>>({
   onAction,
   renderAction,
   filterPreset,
+  summaryItems,
 }: {
   title: string
   description?: string
@@ -1873,6 +1907,7 @@ function DataSection<T extends Record<string, unknown>>({
   onAction?: () => void
   renderAction?: (row: T) => ReactNode
   filterPreset?: TableFilterPreset | null
+  summaryItems?: (rows: T[]) => Array<{ label: string; value: string | number }>
 }) {
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('TODOS')
@@ -1971,6 +2006,7 @@ function DataSection<T extends Record<string, unknown>>({
   )
   const activeStatusCount = filteredRows.filter((row) => row.status === 'ACTIVO' || row.status === 'PENDIENTE').length
   const criticalStatusCount = filteredRows.filter((row) => row.status === 'VENCIDA' || row.status === 'OBSERVADA').length
+  const customSummaryItems = summaryItems?.(filteredRows)
 
   return (
     <section className="work-panel data-panel">
@@ -1988,28 +2024,39 @@ function DataSection<T extends Record<string, unknown>>({
       {notice && <div className="inline-alert">{notice}</div>}
 
       <div className="data-summary-strip" aria-label="Resumen del listado">
-        <article>
-          <span>Registros visibles</span>
-          <strong>{filteredRows.length}</strong>
-        </article>
-        <article>
-          <span>Activos / pendientes</span>
-          <strong>{activeStatusCount}</strong>
-        </article>
-        <article>
-          <span>Alertas</span>
-          <strong>{criticalStatusCount}</strong>
-        </article>
-        {currencyOptions.length > 0 && (
+        {customSummaryItems ? (
+          customSummaryItems.map((item) => (
+            <article key={item.label}>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </article>
+          ))
+        ) : (
           <>
             <article>
-              <span>Total PEN</span>
-              <strong>{money(totalPen, 'PEN')}</strong>
+              <span>Registros visibles</span>
+              <strong>{filteredRows.length}</strong>
             </article>
             <article>
-              <span>Total USD</span>
-              <strong>{money(totalUsd, 'USD')}</strong>
+              <span>Activos / pendientes</span>
+              <strong>{activeStatusCount}</strong>
             </article>
+            <article>
+              <span>Alertas</span>
+              <strong>{criticalStatusCount}</strong>
+            </article>
+            {currencyOptions.length > 0 && (
+              <>
+                <article>
+                  <span>Total PEN</span>
+                  <strong>{money(totalPen, 'PEN')}</strong>
+                </article>
+                <article>
+                  <span>Total USD</span>
+                  <strong>{money(totalUsd, 'USD')}</strong>
+                </article>
+              </>
+            )}
           </>
         )}
       </div>
