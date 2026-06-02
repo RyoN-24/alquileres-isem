@@ -26,6 +26,23 @@ function amountsDiffer(left: number, right: number) {
   return Math.abs(left - right) > 0.01
 }
 
+function roundMoney(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100
+}
+
+function matchesValuationAmount(params: {
+  invoiceAmount: number
+  invoiceCurrency: string
+  valuationAmount: number
+  valuationCurrency: string
+}) {
+  if (params.invoiceCurrency !== params.valuationCurrency) return false
+  const valuationNet = roundMoney(params.valuationAmount)
+  const valuationWithIgv = roundMoney(params.valuationAmount * 1.18)
+  const invoiceAmount = roundMoney(params.invoiceAmount)
+  return !amountsDiffer(invoiceAmount, valuationNet) || !amountsDiffer(invoiceAmount, valuationWithIgv)
+}
+
 export async function listInvoices(params: {
   q?: string
   supplierId?: string
@@ -132,7 +149,12 @@ export async function createInvoice(input: CreateInvoiceInput, userId?: string) 
   const dueDate = input.dueDate ? parseDate(input.dueDate) : addDays(issueDate, valuation.contract.invoiceDueDays)
   const totalAmount = input.totalAmount ?? Number(valuation.calculatedAmount)
   const currency = input.currency ?? valuation.currency
-  const hasMismatch = amountsDiffer(totalAmount, Number(valuation.calculatedAmount)) || currency !== valuation.currency
+  const hasMismatch = !matchesValuationAmount({
+    invoiceAmount: totalAmount,
+    invoiceCurrency: currency,
+    valuationAmount: Number(valuation.calculatedAmount),
+    valuationCurrency: valuation.currency,
+  })
 
   if (hasMismatch && !input.amountMismatchAccepted) {
     throw new HttpError(
@@ -144,6 +166,7 @@ export async function createInvoice(input: CreateInvoiceInput, userId?: string) 
         valuationCurrency: valuation.currency,
         invoiceAmount: totalAmount,
         invoiceCurrency: currency,
+        valuationAmountWithIgv: roundMoney(Number(valuation.calculatedAmount) * 1.18),
       },
     )
   }
@@ -214,9 +237,12 @@ export async function updateInvoice(id: string, input: UpdateInvoiceInput, userI
 
   const totalAmount = input.totalAmount ?? Number(current.totalAmount)
   const currency = input.currency ?? current.currency
-  const hasMismatch =
-    amountsDiffer(totalAmount, Number(current.valuation.calculatedAmount)) ||
-    currency !== current.valuation.currency
+  const hasMismatch = !matchesValuationAmount({
+    invoiceAmount: totalAmount,
+    invoiceCurrency: currency,
+    valuationAmount: Number(current.valuation.calculatedAmount),
+    valuationCurrency: current.valuation.currency,
+  })
 
   if (hasMismatch && !input.amountMismatchAccepted && !current.amountMismatchAccepted) {
     throw new HttpError(

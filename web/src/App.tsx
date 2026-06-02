@@ -146,6 +146,33 @@ const money = (value: number, currency: Currency) =>
     minimumFractionDigits: 2,
   }).format(value)
 
+const IGV_RATE = 0.18
+
+function roundMoney(value: number) {
+  return Math.round((value + Number.EPSILON) * 100) / 100
+}
+
+function valuationInvoiceMatch(params: {
+  invoiceAmount: number
+  invoiceCurrency: Currency
+  valuationAmount: number
+  valuationCurrency: Currency
+}) {
+  if (params.invoiceCurrency !== params.valuationCurrency) return false
+  const valuationNet = roundMoney(params.valuationAmount)
+  const valuationWithIgv = roundMoney(params.valuationAmount * (1 + IGV_RATE))
+  const invoiceAmount = roundMoney(params.invoiceAmount)
+  return Math.abs(invoiceAmount - valuationNet) <= 0.01 || Math.abs(invoiceAmount - valuationWithIgv) <= 0.01
+}
+
+function valuationTaxLabel(invoiceAmount: number, valuationAmount: number) {
+  if (Math.abs(roundMoney(invoiceAmount) - roundMoney(valuationAmount)) <= 0.01) return 'sin IGV adicional'
+  if (Math.abs(roundMoney(invoiceAmount) - roundMoney(valuationAmount * (1 + IGV_RATE))) <= 0.01) {
+    return 'con IGV 18%'
+  }
+  return 'requiere revision'
+}
+
 function buildContractSummaryItems(rows: Array<Record<string, unknown>>) {
   const activeContracts = rows.filter((row) => row.status === 'ACTIVO').length
   const sum = (key: string) =>
@@ -3147,22 +3174,40 @@ function InvoiceForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [valuationId, setValuationId] = useState('')
   const [acceptMismatch, setAcceptMismatch] = useState(false)
+  const [taxTreatment, setTaxTreatment] = useState<'ADD_IGV' | 'INCLUDED' | 'MANUAL'>('ADD_IGV')
+  const [invoiceCurrency, setInvoiceCurrency] = useState<Currency>('PEN')
+  const [invoiceAmount, setInvoiceAmount] = useState('')
   const selectedValuation = valuations.find((valuation) => valuation.id === valuationId)
   const invoicedValuationIds = new Set(invoices.map((invoice) => invoice.valuationId))
   const availableValuations = valuations.filter((valuation) => !invoicedValuationIds.has(valuation.id))
+  const selectedValuationAmount = selectedValuation ? Number(selectedValuation.calculatedAmount) : 0
+  const selectedValuationWithIgv = roundMoney(selectedValuationAmount * (1 + IGV_RATE))
+
+  useEffect(() => {
+    if (!selectedValuation) {
+      setInvoiceAmount('')
+      return
+    }
+    setInvoiceCurrency(selectedValuation.currency)
+    if (taxTreatment === 'ADD_IGV') {
+      setInvoiceAmount(String(selectedValuationWithIgv))
+    }
+    if (taxTreatment === 'INCLUDED') {
+      setInvoiceAmount(String(roundMoney(selectedValuationAmount)))
+    }
+  }, [selectedValuation, selectedValuationAmount, selectedValuationWithIgv, taxTreatment])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    const totalAmount = String(formData.get('totalAmount') ?? '')
     const dueDate = String(formData.get('dueDate') ?? '')
     const input: CreateInvoiceInput = {
       valuationId,
       invoiceNumber: String(formData.get('invoiceNumber') ?? ''),
       issueDate: String(formData.get('issueDate') ?? ''),
       dueDate: dueDate || undefined,
-      currency: String(formData.get('currency') ?? selectedValuation?.currency) as CreateInvoiceInput['currency'],
-      totalAmount: totalAmount ? Number(totalAmount) : undefined,
+      currency: invoiceCurrency,
+      totalAmount: invoiceAmount ? Number(invoiceAmount) : undefined,
       amountMismatchAccepted: acceptMismatch,
       notes: String(formData.get('notes') ?? ''),
       status: String(formData.get('status') ?? 'PENDIENTE') as CreateInvoiceInput['status'],
@@ -3196,7 +3241,14 @@ function InvoiceForm({
         <form className="quick-form" onSubmit={handleSubmit}>
           <label className="wide-field">
             Valorizacion
-            <select required value={valuationId} onChange={(event) => setValuationId(event.target.value)}>
+            <select
+              required
+              value={valuationId}
+              onChange={(event) => {
+                setValuationId(event.target.value)
+                setTaxTreatment('ADD_IGV')
+              }}
+            >
               <option value="">Seleccionar</option>
               {availableValuations.map((valuation) => (
                 <option key={valuation.id} value={valuation.id}>
@@ -3226,22 +3278,43 @@ function InvoiceForm({
             />
           </label>
           <label>
+            Tratamiento IGV
+            <select
+              value={taxTreatment}
+              onChange={(event) => setTaxTreatment(event.target.value as typeof taxTreatment)}
+            >
+              <option value="ADD_IGV">IGV aparte (sumar 18%)</option>
+              <option value="INCLUDED">IGV incluido / no aplica</option>
+              <option value="MANUAL">Monto manual</option>
+            </select>
+          </label>
+          <label>
             Monto factura
             <input
-              name="totalAmount"
               type="number"
               min="0.01"
               step="0.01"
-              placeholder={selectedValuation ? String(selectedValuation.calculatedAmount) : ''}
+              value={invoiceAmount}
+              placeholder={selectedValuation ? String(selectedValuationWithIgv) : ''}
+              onChange={(event) => {
+                setTaxTreatment('MANUAL')
+                setInvoiceAmount(event.target.value)
+              }}
             />
           </label>
           <label>
             Moneda
-            <select name="currency" defaultValue={selectedValuation?.currency ?? 'PEN'}>
+            <select value={invoiceCurrency} onChange={(event) => setInvoiceCurrency(event.target.value as Currency)}>
               <option value="PEN">Soles</option>
               <option value="USD">Dolares</option>
             </select>
           </label>
+          {selectedValuation && (
+            <p className="helper-text wide-field">
+              Base: {money(selectedValuationAmount, selectedValuation.currency)}. Con IGV 18%:{' '}
+              {money(selectedValuationWithIgv, selectedValuation.currency)}.
+            </p>
+          )}
           <label>
             Estado
             <select name="status">
@@ -3565,8 +3638,12 @@ function InvoiceDetail({
 }) {
   const valuationAmount = Number(invoice.valuation.calculatedAmount)
   const invoiceAmount = Number(invoice.totalAmount)
-  const hasMismatch =
-    Math.abs(valuationAmount - invoiceAmount) > 0.01 || invoice.currency !== invoice.valuation.currency
+  const hasMismatch = !valuationInvoiceMatch({
+    invoiceAmount,
+    invoiceCurrency: invoice.currency,
+    valuationAmount,
+    valuationCurrency: invoice.valuation.currency,
+  })
 
   return (
     <div className="modal-backdrop" role="presentation">
@@ -3607,6 +3684,11 @@ function InvoiceDetail({
         {hasMismatch && (
           <div className="inline-alert">
             El monto o moneda de la factura no coincide con la valorizacion. Revision requerida.
+          </div>
+        )}
+        {!hasMismatch && (
+          <div className="inline-alert success">
+            Factura conciliada con la valorizacion {valuationTaxLabel(invoiceAmount, valuationAmount)}.
           </div>
         )}
 
@@ -3991,7 +4073,13 @@ function ValuationDetail({
   const invoiceAmount = invoice ? Number(invoice.totalAmount) : 0
   const valuationAmount = Number(valuation.calculatedAmount)
   const hasMismatch =
-    invoice && (Math.abs(invoiceAmount - valuationAmount) > 0.01 || invoice.currency !== valuation.currency)
+    invoice &&
+    !valuationInvoiceMatch({
+      invoiceAmount,
+      invoiceCurrency: invoice.currency,
+      valuationAmount,
+      valuationCurrency: valuation.currency,
+    })
   const providerValuation = attachments.filter((attachment) => attachment.category === 'VALORIZACION_PROVEEDOR')
 
   return (
@@ -4028,6 +4116,11 @@ function ValuationDetail({
         {hasMismatch && (
           <div className="inline-alert">
             La factura asociada no coincide exactamente con el monto o moneda de esta valorizacion.
+          </div>
+        )}
+        {invoice && !hasMismatch && (
+          <div className="inline-alert success">
+            Factura conciliada con la valorizacion {valuationTaxLabel(invoiceAmount, valuationAmount)}.
           </div>
         )}
 
