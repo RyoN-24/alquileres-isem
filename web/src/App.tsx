@@ -2447,7 +2447,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, user: AuthUser) => 
     setIsSubmitting(true)
     setError('')
     try {
-      const result = await login(email, password)
+      const result = await login(email.trim().toLowerCase(), password)
       onLogin(result.token, result.user)
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'No se pudo iniciar sesion')
@@ -2490,7 +2490,7 @@ function LoginScreen({ onLogin }: { onLogin: (token: string, user: AuthUser) => 
                 value={email}
                 autoComplete="off"
                 placeholder="correo@empresa.com"
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => setEmail(event.target.value.trim().toLowerCase())}
               />
             </span>
           </label>
@@ -4339,7 +4339,7 @@ function SettingsView({
     const formData = new FormData(form)
     const input: CreateUserInput = {
       name: String(formData.get('name') ?? '').trim(),
-      email: String(formData.get('email') ?? '').trim(),
+      email: String(formData.get('email') ?? '').trim().toLowerCase(),
       password: String(formData.get('password') ?? ''),
       role: String(formData.get('role') ?? 'OPERATIVO') as CreateUserInput['role'],
     }
@@ -4450,15 +4450,15 @@ function SettingsView({
         <form className="settings-form user-settings-form" onSubmit={handleCreateUser}>
           <label>
             Nombre
-            <input name="name" placeholder="Nombre completo" required />
+            <input name="name" placeholder="Nombre completo" autoComplete="off" required />
           </label>
           <label>
             Correo
-            <input name="email" type="email" placeholder="usuario@isem.local" required />
+            <input name="email" type="email" placeholder="usuario@isem.local" autoComplete="off" required />
           </label>
           <label>
             Contrasena temporal
-            <input name="password" type="password" minLength={8} required />
+            <input name="password" type="password" minLength={8} autoComplete="new-password" required />
           </label>
           <label>
             Rol

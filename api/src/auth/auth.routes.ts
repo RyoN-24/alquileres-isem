@@ -18,7 +18,8 @@ authRouter.post(
   '/login',
   asyncHandler(async (req, res) => {
     const input = loginSchema.parse(req.body)
-    const user = await prisma.user.findUnique({ where: { email: input.email } })
+    const email = input.email.trim().toLowerCase()
+    const user = await prisma.user.findUnique({ where: { email } })
 
     if (!user || !user.isActive) {
       throw new HttpError(401, 'INVALID_CREDENTIALS', 'Correo o contrasena incorrectos')
@@ -53,4 +54,3 @@ authRouter.get(
     res.json({ user: req.user })
   }),
 )
-

@@ -52,7 +52,7 @@ No mover manualmente carpetas despues de cargar documentos, porque la base de da
 
 ## Produccion en Render + Vercel
 
-La configuracion incluida prioriza que el proyecto funcione ya en Render/Vercel con el backend actual en SQLite usando `/tmp`, porque Render Free no permite escribir en rutas como `/var/data` si no existe un disco persistente montado.
+La configuracion incluida usa SQLite con un disco persistente de Render montado en `/var/data`. No usar `/tmp` para datos reales: Render recrea ese almacenamiento en reinicios o redeploys y se perderian proveedores, usuarios, facturas y adjuntos.
 
 Render API:
 
@@ -60,10 +60,13 @@ Render API:
 - Build command: `npm install && npm run prisma:generate && npm run build`.
 - Start command: `npm run start:prod`.
 - Health check: `/health`.
-- `DATABASE_URL`: `file:/tmp/isem.db`.
-- `LOCAL_STORAGE_ROOT`: `/tmp/ISEM_ARCHIVOS`.
+- Disk: Persistent Disk montado en `/var/data`.
+- `DATABASE_URL`: `file:/var/data/isem.db`.
+- `LOCAL_STORAGE_ROOT`: `/var/data/ISEM_ARCHIVOS`.
 - `APP_URL`: URL final de Vercel.
 - `APP_URLS`: dominios adicionales separados por coma, por ejemplo previews de Vercel.
+
+Si se mantiene Render Free sin disco persistente, la aplicacion sirve solo para pruebas. Cualquier proveedor, usuario o factura creada puede desaparecer al reiniciarse la instancia.
 
 Vercel web:
 

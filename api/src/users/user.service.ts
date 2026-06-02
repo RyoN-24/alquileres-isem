@@ -34,7 +34,8 @@ export async function listUsers() {
 }
 
 export async function createUser(input: CreateUserInput, currentUserId?: string) {
-  const existing = await prisma.user.findUnique({ where: { email: input.email } })
+  const email = input.email.trim().toLowerCase()
+  const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) {
     throw new HttpError(409, 'USER_EMAIL_EXISTS', 'Ya existe un usuario con ese correo')
   }
@@ -43,7 +44,7 @@ export async function createUser(input: CreateUserInput, currentUserId?: string)
     data: {
       companyId: await getDefaultCompanyId(),
       name: input.name,
-      email: input.email,
+      email,
       role: input.role,
       passwordHash: await hashPassword(input.password),
     },
@@ -74,6 +75,7 @@ export async function updateUser(id: string, input: UpdateUserInput, currentUser
   }
 
   if (input.email) {
+    input.email = input.email.trim().toLowerCase()
     const existing = await prisma.user.findFirst({
       where: { email: input.email, NOT: { id } },
     })
