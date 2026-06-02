@@ -126,7 +126,7 @@ Pasos generales:
 El proyecto ya queda preparado para PostgreSQL/Supabase:
 
 - Prisma usa provider `postgresql`.
-- El arranque de produccion ejecuta `prisma db push` y luego el seed inicial.
+- El build de produccion ejecuta `prisma db push` y luego el seed inicial. El arranque solo levanta el servidor para que Render detecte el puerto sin esperar tareas de base de datos.
 - Los adjuntos se guardan en Supabase Storage cuando `FILE_STORAGE_MODE=CLOUD_STORAGE`.
 - En desarrollo local se puede seguir usando carpetas visibles con `FILE_STORAGE_MODE=LOCAL_VISIBLE`, pero para eso la base local debe ser PostgreSQL.
 
