@@ -2542,7 +2542,8 @@ function SupplierForm({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+    const form = event.currentTarget
+    const formData = new FormData(form)
     const input: CreateSupplierInput = {
       businessName: String(formData.get('businessName') ?? ''),
       ruc: String(formData.get('ruc') ?? ''),
@@ -2649,7 +2650,8 @@ function EquipmentForm({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+    const form = event.currentTarget
+    const formData = new FormData(form)
     const currentSiteId = String(formData.get('currentSiteId') ?? '')
     const year = String(formData.get('year') ?? '')
     const input: CreateEquipmentInput = {
@@ -3427,7 +3429,8 @@ function AttachmentManager({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+    const form = event.currentTarget
+    const formData = new FormData(form)
     const file = formData.get('file')
     if (!(file instanceof File) || file.size === 0) {
       setError('Debe seleccionar un archivo')
@@ -3438,8 +3441,9 @@ function AttachmentManager({
     setError('')
     try {
       await onUploadAttachment({ entityType, entityId, category, file })
-      event.currentTarget.reset()
+      form.reset()
       setCategory(categories[0]?.value ?? 'OTRO')
+      setError('')
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'No se pudo subir el adjunto')
     } finally {
