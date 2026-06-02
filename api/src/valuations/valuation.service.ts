@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { prisma } from '../db/prisma'
 import { HttpError } from '../http/errors'
-import { localVisibleStorage } from '../storage/local-storage.service'
+import { documentStorage } from '../storage/document-storage.service'
 import { createValuationSchema, updateValuationSchema } from './valuation.schemas'
 
 type CreateValuationInput = z.infer<typeof createValuationSchema>
@@ -142,7 +142,7 @@ export async function createValuation(input: CreateValuationInput, userId?: stri
   const calculatedAmount = input.quantity * unitRate
   const currency = input.currency ?? contract.currency
 
-  const folderPath = await localVisibleStorage.ensureValuationFolders({
+  const folderPath = await documentStorage.ensureValuationFolders({
     ruc: contract.supplier.ruc,
     businessName: contract.supplier.businessName,
     contractNumber: contract.contractNumber,
@@ -288,4 +288,3 @@ export async function deleteValuation(id: string, userId?: string) {
 
   return { success: true }
 }
-

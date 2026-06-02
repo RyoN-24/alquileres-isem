@@ -1,9 +1,8 @@
 import path from 'node:path'
-import fs from 'node:fs/promises'
 import { AttachmentEntityType } from '@prisma/client'
 import { prisma } from '../db/prisma'
 import { HttpError } from '../http/errors'
-import { localVisibleStorage } from '../storage/local-storage.service'
+import { documentStorage } from '../storage/document-storage.service'
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 const allowedMimeTypes = new Set([
@@ -135,10 +134,11 @@ export async function uploadAttachment(input: UploadAttachmentInput) {
     orderBy: { version: 'desc' },
   })
   const version = (latestAttachment?.version ?? 0) + 1
-  const storagePath = await localVisibleStorage.saveUploadedFile({
+  const storagePath = await documentStorage.saveUploadedFile({
     tempPath: input.file.path,
     destinationFolder: destination.folder,
     originalName: input.file.originalname,
+    mimeType: input.file.mimetype,
   })
 
   const attachment = await prisma.attachment.create({
@@ -194,10 +194,9 @@ export async function getAttachmentForDownload(id: string) {
   }
 
   try {
-    await fs.access(attachment.storagePath)
+    const target = await documentStorage.getDownloadTarget(attachment.storagePath)
+    return { attachment, target }
   } catch {
     throw new HttpError(404, 'ATTACHMENT_FILE_NOT_FOUND', 'El archivo ya no existe en la carpeta visible')
   }
-
-  return attachment
 }

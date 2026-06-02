@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { prisma } from '../db/prisma'
 import { HttpError } from '../http/errors'
-import { localVisibleStorage } from '../storage/local-storage.service'
+import { documentStorage } from '../storage/document-storage.service'
 import { createEquipmentSchema, updateEquipmentSchema } from './equipment.schemas'
 import {
   createEquipmentTypeSchema,
@@ -302,7 +302,7 @@ export async function createEquipment(input: CreateEquipmentInput, userId?: stri
     }
   }
 
-  const folderPath = await localVisibleStorage.ensureEquipmentFolders({
+  const folderPath = await documentStorage.ensureEquipmentFolders({
     ruc: supplier.ruc,
     businessName: supplier.businessName,
     code: input.plateOrInternalCode ?? input.description,

@@ -45,7 +45,11 @@ attachmentRouter.get(
   '/:id/download',
   asyncHandler(async (req, res) => {
     const attachment = await getAttachmentForDownload(String(req.params.id))
-    res.download(attachment.storagePath, attachment.fileName)
+    if (attachment.target.type === 'signed-url') {
+      res.redirect(attachment.target.url)
+      return
+    }
+    res.download(attachment.target.path, attachment.attachment.fileName)
   }),
 )
 

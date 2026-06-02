@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client'
 import { prisma } from '../db/prisma'
 import { HttpError } from '../http/errors'
-import { localVisibleStorage } from '../storage/local-storage.service'
+import { documentStorage } from '../storage/document-storage.service'
 import type { createSupplierSchema, updateSupplierSchema } from './supplier.schemas'
 import type { z } from 'zod'
 
@@ -71,7 +71,7 @@ export async function createSupplier(input: CreateSupplierInput, userId?: string
     throw new HttpError(409, 'SUPPLIER_RUC_EXISTS', 'Ya existe un proveedor con ese RUC')
   }
 
-  const folderPath = await localVisibleStorage.ensureSupplierFolders({
+  const folderPath = await documentStorage.ensureSupplierFolders({
     ruc: input.ruc,
     businessName: input.businessName,
   })

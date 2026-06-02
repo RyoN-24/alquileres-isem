@@ -50,9 +50,17 @@ LOCAL_STORAGE_ROOT=E:/ISEM_ARCHIVOS
 
 No mover manualmente carpetas despues de cargar documentos, porque la base de datos guarda la ruta exacta del archivo. Para backups se debe copiar completa la carpeta `E:/ISEM_ARCHIVOS` junto con la base de datos.
 
-## Produccion en Render + Vercel
+## Produccion gratis en Render + Vercel + Supabase
 
-La configuracion incluida usa SQLite con un disco persistente de Render montado en `/var/data`. No usar `/tmp` para datos reales: Render recrea ese almacenamiento en reinicios o redeploys y se perderian proveedores, usuarios, facturas y adjuntos.
+La configuracion de produccion usa Render solo para ejecutar la API, Vercel para la web y Supabase Free para conservar la base de datos y adjuntos. No usar SQLite en `/tmp` para datos reales: Render recrea ese almacenamiento en reinicios o redeploys y se perderian proveedores, usuarios, facturas y adjuntos.
+
+Supabase:
+
+1. Crear un proyecto en Supabase.
+2. En Storage, crear un bucket privado llamado `isem-documentos`.
+3. Copiar el `Project URL`.
+4. Copiar la connection string de Postgres en modo URI y usarla como `DATABASE_URL`.
+5. Copiar la `service_role key` solo para Render. No colocarla en Vercel ni en el frontend.
 
 Render API:
 
@@ -60,13 +68,15 @@ Render API:
 - Build command: `npm install && npm run prisma:generate && npm run build`.
 - Start command: `npm run start:prod`.
 - Health check: `/health`.
-- Disk: Persistent Disk montado en `/var/data`.
-- `DATABASE_URL`: `file:/var/data/isem.db`.
-- `LOCAL_STORAGE_ROOT`: `/var/data/ISEM_ARCHIVOS`.
+- `DATABASE_URL`: connection string de Supabase Postgres.
+- `FILE_STORAGE_MODE`: `CLOUD_STORAGE`.
+- `SUPABASE_URL`: Project URL de Supabase.
+- `SUPABASE_SERVICE_ROLE_KEY`: service role key de Supabase.
+- `SUPABASE_STORAGE_BUCKET`: `isem-documentos`.
 - `APP_URL`: URL final de Vercel.
 - `APP_URLS`: dominios adicionales separados por coma, por ejemplo previews de Vercel.
 
-Si se mantiene Render Free sin disco persistente, la aplicacion sirve solo para pruebas. Cualquier proveedor, usuario o factura creada puede desaparecer al reiniciarse la instancia.
+Con esta configuracion, aunque Render Free se duerma o reinicie, la informacion queda guardada en Supabase.
 
 Vercel web:
 
@@ -111,15 +121,14 @@ Pasos generales:
 7. Crear usuario administrador definitivo.
 8. Probar carga/descarga de adjuntos desde una red externa.
 
-## PostgreSQL / Supabase futuro
+## PostgreSQL / Supabase
 
-Cuando se migre a Supabase:
+El proyecto ya queda preparado para PostgreSQL/Supabase:
 
-- Cambiar el provider de Prisma de `sqlite` a `postgresql`.
-- Crear una migracion limpia para PostgreSQL o usar `prisma db push` en una base nueva controlada.
-- Usar Supabase Postgres como `DATABASE_URL`.
-- Mantener adjuntos localmente si el cliente necesita carpetas visibles.
-- Si se migra storage a Supabase Storage, crear una capa de almacenamiento cloud y decidir si se mantiene una copia local visible.
+- Prisma usa provider `postgresql`.
+- El arranque de produccion ejecuta `prisma db push` y luego el seed inicial.
+- Los adjuntos se guardan en Supabase Storage cuando `FILE_STORAGE_MODE=CLOUD_STORAGE`.
+- En desarrollo local se puede seguir usando carpetas visibles con `FILE_STORAGE_MODE=LOCAL_VISIBLE`, pero para eso la base local debe ser PostgreSQL.
 
 ## Alertas por correo y WhatsApp
 

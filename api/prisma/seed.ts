@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { hashPassword } from '../src/auth/password'
-import { localVisibleStorage } from '../src/storage/local-storage.service'
+import { documentStorage } from '../src/storage/document-storage.service'
 
 const prisma = new PrismaClient()
 
@@ -75,7 +75,7 @@ async function main() {
     ),
   )
 
-  await localVisibleStorage.ensureRoot()
+  await documentStorage.ensureRoot()
 }
 
 main()

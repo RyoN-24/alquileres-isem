@@ -24,6 +24,12 @@ const envSchema = z.object({
     emptyStringToUndefined,
     z.string().min(1).default('E:/ISEM_ARCHIVOS'),
   ),
+  SUPABASE_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
+  SUPABASE_SERVICE_ROLE_KEY: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  SUPABASE_STORAGE_BUCKET: z.preprocess(
+    emptyStringToUndefined,
+    z.string().min(1).default('isem-documentos'),
+  ),
   ALERT_DAYS_BEFORE_DUE: z.coerce.number().int().positive().default(3),
   CONTRACT_ALERT_DAYS_BEFORE_DUE: z.coerce.number().int().positive().default(3),
 })
@@ -38,6 +44,12 @@ if (!parsedEnv.success) {
 }
 
 export const env = parsedEnv.data
+
+if (env.FILE_STORAGE_MODE === 'CLOUD_STORAGE' && (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY)) {
+  throw new Error(
+    'Configuracion de entorno invalida: SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY son obligatorios con CLOUD_STORAGE'
+  )
+}
 
 export const allowedAppOrigins = Array.from(
   new Set([

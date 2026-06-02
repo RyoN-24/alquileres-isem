@@ -7,10 +7,6 @@ services:
     buildCommand: npm install && npm run prisma:generate && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /health
-    disk:
-      name: isem-data
-      mountPath: /var/data
-      sizeGB: 5
     envVars:
       - key: NODE_ENV
         value: production
@@ -21,15 +17,21 @@ services:
       - key: APP_URLS
         sync: false
       - key: DATABASE_URL
-        value: file:/var/data/isem.db
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
         value: 8h
       - key: FILE_STORAGE_MODE
-        value: LOCAL_VISIBLE
+        value: CLOUD_STORAGE
       - key: LOCAL_STORAGE_ROOT
-        value: /var/data/ISEM_ARCHIVOS
+        value: /tmp/ISEM_ARCHIVOS
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: isem-documentos
       - key: ALERT_DAYS_BEFORE_DUE
         value: 3
       - key: CONTRACT_ALERT_DAYS_BEFORE_DUE

@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises'
 import path from 'node:path'
 import { Prisma } from '@prisma/client'
 import PDFDocument from 'pdfkit'
@@ -6,7 +5,7 @@ import { z } from 'zod'
 import { prisma } from '../db/prisma'
 import { HttpError } from '../http/errors'
 import { getContractTemplate } from '../settings/settings.service'
-import { localVisibleStorage } from '../storage/local-storage.service'
+import { documentStorage } from '../storage/document-storage.service'
 import { normalizeFolderName } from '../storage/path-utils'
 import { createContractSchema, updateContractSchema } from './contract.schemas'
 
@@ -173,7 +172,7 @@ export async function createContract(input: CreateContractInput, userId?: string
     throw new HttpError(409, 'CONTRACT_NUMBER_EXISTS', 'Ya existe un contrato con ese numero')
   }
 
-  const folderPath = await localVisibleStorage.ensureContractFolders({
+  const folderPath = await documentStorage.ensureContractFolders({
     ruc: supplier.ruc,
     businessName: supplier.businessName,
     contractNumber: input.contractNumber,
@@ -345,11 +344,14 @@ export async function generateContractPdf(id: string, userId?: string) {
 
   const pdf = await buildPdfBuffer(`Contrato ${contract.contractNumber}`, rendered)
   const destinationFolder = path.join(contract.folderPath, 'contrato')
-  await fs.mkdir(destinationFolder, { recursive: true })
   const generatedAt = new Date().toISOString().replace(/[:.]/g, '-')
   const fileName = `${normalizeFolderName(`contrato-generado-${contract.contractNumber}`)}-${generatedAt}.pdf`
-  const storagePath = path.join(destinationFolder, fileName)
-  await fs.writeFile(storagePath, pdf)
+  const storagePath = await documentStorage.saveBuffer({
+    buffer: pdf,
+    destinationFolder,
+    fileName,
+    mimeType: 'application/pdf',
+  })
 
   const attachment = await prisma.attachment.create({
     data: {
