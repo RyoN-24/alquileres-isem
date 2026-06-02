@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { hashPassword } from '../src/auth/password'
+import { DEFAULT_CONTRACT_TEMPLATE } from '../src/settings/contract-template'
 import { documentStorage } from '../src/storage/document-storage.service'
 
 const prisma = new PrismaClient()
@@ -74,6 +75,22 @@ async function main() {
       }),
     ),
   )
+
+  const contractTemplate = await prisma.appSetting.findUnique({ where: { key: 'contracts.template' } })
+  const shouldRefreshLegacyTemplate =
+    !contractTemplate ||
+    (
+      contractTemplate.value.includes('Conste por el presente documento el contrato de servicio de alquiler que celebran') &&
+      !contractTemplate.value.includes('RESPONSABILIDAD OPERATIVA')
+    )
+
+  if (shouldRefreshLegacyTemplate) {
+    await prisma.appSetting.upsert({
+      where: { key: 'contracts.template' },
+      update: { value: DEFAULT_CONTRACT_TEMPLATE },
+      create: { key: 'contracts.template', value: DEFAULT_CONTRACT_TEMPLATE },
+    })
+  }
 
   await documentStorage.ensureRoot()
 }

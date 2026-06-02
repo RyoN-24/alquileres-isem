@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { env } from '../config/env'
 import { prisma } from '../db/prisma'
+import { DEFAULT_CONTRACT_TEMPLATE } from './contract-template'
 import { updateAlertSettingsSchema, updateContractTemplateSchema } from './settings.schemas'
 
 const ALERT_SETTING_KEYS = {
@@ -10,35 +11,6 @@ const ALERT_SETTING_KEYS = {
 } as const
 
 const CONTRACT_TEMPLATE_KEY = 'contracts.template'
-
-export const DEFAULT_CONTRACT_TEMPLATE = `CONTRATO DE SERVICIO DE ALQUILER DE EQUIPO
-
-Conste por el presente documento el contrato de servicio de alquiler que celebran, de una parte, INDUSTRIAS Y SERVICIOS ELECTRO-MECANICOS SRL, con RUC 20220199968, a quien en adelante se denominara EL CONTRATANTE; y de la otra parte {{supplierName}}, con RUC {{supplierRuc}}, a quien en adelante se denominara EL PROVEEDOR.
-
-PRIMERA: OBJETO
-EL PROVEEDOR entrega en alquiler el/los siguiente(s) equipo(s) o vehiculo(s) para la sede u obra {{siteName}}:
-{{equipmentList}}
-
-SEGUNDA: PLAZO
-El servicio inicia el {{startDate}} y culmina el {{endDate}}, salvo ampliacion, suspension o cierre anticipado acordado por las partes.
-
-TERCERA: TARIFA Y MONEDA
-La modalidad de cobro sera por {{billingMode}}, con una tarifa de {{currency}} {{rate}}. Las valorizaciones y facturas se emitiran en {{currency}}, salvo acuerdo escrito distinto.
-
-CUARTA: VALORIZACION Y FACTURACION
-Las valorizaciones se revisaran conforme al avance o periodo pactado. La factura asociada vencera a los {{invoiceDueDays}} dias calendario desde su emision, salvo que se registre una fecha de vencimiento distinta.
-
-QUINTA: DOCUMENTOS DE RESPALDO
-El contrato firmado, orden de servicio, valorizaciones emitidas, facturas y comprobantes de pago deberan conservarse en la carpeta documentaria del contrato.
-
-SEXTA: OBSERVACIONES
-{{notes}}
-
-Firmado por las partes en senal de conformidad.
-
-EL CONTRATANTE: INDUSTRIAS Y SERVICIOS ELECTRO-MECANICOS SRL
-EL PROVEEDOR: {{supplierName}}
-CONTRATO: {{contractNumber}}`
 
 export type AlertSettings = z.infer<typeof updateAlertSettingsSchema>
 export type ContractTemplateSettings = z.infer<typeof updateContractTemplateSchema>

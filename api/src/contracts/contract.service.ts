@@ -20,8 +20,16 @@ function formatDate(value: Date) {
   return value.toISOString().slice(0, 10)
 }
 
-function formatCurrency(value: unknown) {
-  return Number(value).toFixed(2)
+function formatMoney(value: unknown, currency: string) {
+  const amount = Number(value).toLocaleString('es-PE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+  return currency === 'PEN' ? `S/ ${amount}` : `USD ${amount}`
+}
+
+function billingModeLabel(value: string) {
+  return value === 'HORA' ? 'hora' : 'dia'
 }
 
 function renderTemplate(template: string, values: Record<string, string>) {
@@ -30,17 +38,264 @@ function renderTemplate(template: string, values: Record<string, string>) {
   })
 }
 
-async function buildPdfBuffer(title: string, body: string) {
-  const doc = new PDFDocument({ margin: 48, size: 'A4' })
+type ContractPdfEquipment = {
+  type: string
+  description: string
+  code: string
+  brandModel: string
+}
+
+type ContractPdfContext = {
+  title: string
+  contractNumber: string
+  issueDate: string
+  companyName: string
+  companyRuc: string
+  supplierName: string
+  supplierRuc: string
+  siteName: string
+  startDate: string
+  endDate: string
+  billingMode: string
+  rate: string
+  currency: string
+  invoiceDueDays: string
+  equipment: ContractPdfEquipment[]
+}
+
+function ensurePdfSpace(doc: PDFKit.PDFDocument, requiredHeight: number) {
+  if (doc.y + requiredHeight > doc.page.height - doc.page.margins.bottom) {
+    doc.addPage()
+  }
+}
+
+function drawSectionTitle(doc: PDFKit.PDFDocument, title: string) {
+  ensurePdfSpace(doc, 32)
+  doc.moveDown(0.6)
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(9)
+    .fillColor('#0f2742')
+    .text(title.toUpperCase(), { characterSpacing: 0.2 })
+  doc
+    .moveTo(doc.page.margins.left, doc.y + 4)
+    .lineTo(doc.page.width - doc.page.margins.right, doc.y + 4)
+    .strokeColor('#d9e2ea')
+    .lineWidth(1)
+    .stroke()
+  doc.moveDown(0.8)
+}
+
+function drawKeyValueGrid(doc: PDFKit.PDFDocument, items: Array<{ label: string; value: string }>, columns = 2) {
+  const startX = doc.page.margins.left
+  const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right
+  const gap = 10
+  const width = (pageWidth - gap * (columns - 1)) / columns
+  const rowHeight = 44
+
+  for (let index = 0; index < items.length; index += columns) {
+    ensurePdfSpace(doc, rowHeight + 8)
+    const rowY = doc.y
+
+    items.slice(index, index + columns).forEach((item, columnIndex) => {
+      const x = startX + columnIndex * (width + gap)
+      doc.roundedRect(x, rowY, width, rowHeight, 6).fillAndStroke('#f7fafc', '#d9e2ea')
+      doc
+        .font('Helvetica-Bold')
+        .fontSize(7.5)
+        .fillColor('#53667a')
+        .text(item.label.toUpperCase(), x + 10, rowY + 9, { width: width - 20 })
+      doc
+        .font('Helvetica-Bold')
+        .fontSize(10)
+        .fillColor('#142033')
+        .text(item.value || '-', x + 10, rowY + 23, { width: width - 20 })
+    })
+
+    doc.y = rowY + rowHeight + 8
+  }
+}
+
+function drawEquipmentTable(doc: PDFKit.PDFDocument, equipment: ContractPdfEquipment[]) {
+  const startX = doc.page.margins.left
+  const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right
+  const widths = [28, 112, 190, 78, pageWidth - 408]
+  const headers = ['#', 'Tipo', 'Descripcion', 'Placa/Codigo', 'Marca/Modelo']
+  const rowHeight = 25
+
+  ensurePdfSpace(doc, rowHeight * 2)
+  const headerY = doc.y
+  doc.rect(startX, headerY, pageWidth, rowHeight).fill('#0f2742')
+  let x = startX
+  headers.forEach((header, index) => {
+    doc.font('Helvetica-Bold').fontSize(7.5).fillColor('#ffffff').text(header, x + 6, headerY + 8, {
+      width: widths[index] - 10,
+    })
+    x += widths[index]
+  })
+  doc.y = headerY + rowHeight
+
+  const rows = equipment.length > 0 ? equipment : [{ type: '-', description: 'Sin equipos registrados', code: '-', brandModel: '-' }]
+  rows.forEach((item, index) => {
+    ensurePdfSpace(doc, rowHeight + 6)
+    const y = doc.y
+    const fill = index % 2 === 0 ? '#ffffff' : '#f7fafc'
+    doc.rect(startX, y, pageWidth, rowHeight).fillAndStroke(fill, '#e5edf3')
+    x = startX
+    const cells = [String(index + 1), item.type, item.description, item.code, item.brandModel]
+    cells.forEach((cell, cellIndex) => {
+      doc.font('Helvetica').fontSize(8).fillColor('#24364a').text(cell || '-', x + 6, y + 7, {
+        width: widths[cellIndex] - 10,
+        height: rowHeight - 8,
+        ellipsis: true,
+      })
+      x += widths[cellIndex]
+    })
+    doc.y = y + rowHeight
+  })
+  doc.moveDown(0.6)
+}
+
+function getClauseBlocks(body: string) {
+  const lines = body
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  const blocks: Array<{ title: string; text: string[] }> = []
+  let current: { title: string; text: string[] } | null = null
+
+  for (const line of lines) {
+    if (/^(PRIMERA|SEGUNDA|TERCERA|CUARTA|QUINTA|SEXTA|SEPTIMA|OCTAVA|NOVENA|DECIMA|DECIMA\s+PRIMERA|D[ÉE]CIMA|D[ÉE]CIMA\s+PRIMERA):/i.test(line)) {
+      current = { title: line, text: [] }
+      blocks.push(current)
+      continue
+    }
+
+    if (!current) continue
+    if (/^(CONTRATO DE|EL CONTRATANTE:|EL PROVEEDOR:|CONTRATO:)/i.test(line)) continue
+    current.text.push(line)
+  }
+
+  return blocks
+}
+
+function drawClauses(doc: PDFKit.PDFDocument, body: string) {
+  const clauses = getClauseBlocks(body)
+  for (const clause of clauses) {
+    ensurePdfSpace(doc, 70)
+    doc.font('Helvetica-Bold').fontSize(9.2).fillColor('#0f2742').text(clause.title)
+    doc.moveDown(0.25)
+    doc
+      .font('Helvetica')
+      .fontSize(8.8)
+      .fillColor('#26384c')
+      .text(clause.text.join('\n'), {
+        align: 'justify',
+        lineGap: 3,
+      })
+    doc.moveDown(0.7)
+  }
+}
+
+function drawSignatures(doc: PDFKit.PDFDocument, context: ContractPdfContext) {
+  ensurePdfSpace(doc, 110)
+  doc.moveDown(1)
+  const startX = doc.page.margins.left
+  const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right
+  const boxWidth = (pageWidth - 28) / 2
+  const y = doc.y + 24
+
+  ;[
+    { title: 'EL CONTRATANTE', name: context.companyName, ruc: `RUC ${context.companyRuc}` },
+    { title: 'EL PROVEEDOR', name: context.supplierName, ruc: `RUC ${context.supplierRuc}` },
+  ].forEach((party, index) => {
+    const x = startX + index * (boxWidth + 28)
+    doc.moveTo(x, y).lineTo(x + boxWidth, y).strokeColor('#66788a').lineWidth(1).stroke()
+    doc.font('Helvetica-Bold').fontSize(8.2).fillColor('#142033').text(party.title, x, y + 12, {
+      width: boxWidth,
+      align: 'center',
+    })
+    doc.font('Helvetica').fontSize(7.8).fillColor('#53667a').text(party.name, x, y + 26, {
+      width: boxWidth,
+      align: 'center',
+    })
+    doc.text(party.ruc, x, y + 39, { width: boxWidth, align: 'center' })
+  })
+
+  doc.y = y + 62
+}
+
+async function buildPdfBuffer(context: ContractPdfContext, body: string) {
+  const doc = new PDFDocument({ margin: 44, size: 'A4', bufferPages: true })
   const chunks: Buffer[] = []
 
   doc.on('data', (chunk: Buffer) => chunks.push(Buffer.from(chunk)))
-  doc.fontSize(15).text(title, { align: 'center' })
-  doc.moveDown()
-  doc.fontSize(10).text(body, {
-    align: 'justify',
-    lineGap: 4,
-  })
+
+  doc.rect(0, 0, doc.page.width, 96).fill('#0f2742')
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(9)
+    .fillColor('#9fd3ff')
+    .text(context.companyName, 44, 30, { width: 330 })
+  doc.font('Helvetica').fontSize(8).fillColor('#dce8f3').text(`RUC ${context.companyRuc}`, 44, 44)
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(16)
+    .fillColor('#ffffff')
+    .text(context.title, 44, 60, { width: 420 })
+  doc
+    .roundedRect(doc.page.width - 176, 30, 132, 42, 6)
+    .fillAndStroke('#ffffff', '#ffffff')
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(8)
+    .fillColor('#53667a')
+    .text('NRO. CONTRATO', doc.page.width - 164, 40, { width: 108, align: 'center' })
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(11)
+    .fillColor('#0f2742')
+    .text(context.contractNumber, doc.page.width - 164, 53, { width: 108, align: 'center' })
+
+  doc.y = 122
+  drawSectionTitle(doc, 'Partes contratantes')
+  drawKeyValueGrid(doc, [
+    { label: 'Contratante', value: `${context.companyName} - RUC ${context.companyRuc}` },
+    { label: 'Proveedor', value: `${context.supplierName} - RUC ${context.supplierRuc}` },
+  ])
+
+  drawSectionTitle(doc, 'Resumen operativo y economico')
+  drawKeyValueGrid(doc, [
+    { label: 'Sede u obra', value: context.siteName },
+    { label: 'Vigencia', value: `${context.startDate} al ${context.endDate}` },
+    { label: 'Modalidad', value: `Por ${context.billingMode}` },
+    { label: 'Tarifa base', value: context.rate },
+    { label: 'Moneda', value: context.currency },
+    { label: 'Vencimiento de facturas', value: `${context.invoiceDueDays} dias calendario` },
+  ], 3)
+
+  drawSectionTitle(doc, 'Equipos incluidos')
+  drawEquipmentTable(doc, context.equipment)
+
+  drawSectionTitle(doc, 'Clausulas contractuales')
+  drawClauses(doc, body)
+  drawSignatures(doc, context)
+
+  const range = doc.bufferedPageRange()
+  for (let i = range.start; i < range.start + range.count; i += 1) {
+    doc.switchToPage(i)
+    doc
+      .font('Helvetica')
+      .fontSize(7)
+      .fillColor('#7a8a9a')
+      .text(
+        `Contrato ${context.contractNumber} | Generado el ${context.issueDate} | Pagina ${i + 1} de ${range.count}`,
+        doc.page.margins.left,
+        doc.page.height - 30,
+        { align: 'center' },
+      )
+  }
   doc.end()
 
   await new Promise<void>((resolve) => {
@@ -314,16 +569,28 @@ export async function generateContractPdf(id: string, userId?: string) {
   }
 
   const { template } = await getContractTemplate()
+  const equipmentRows = contract.contractEquipment.map((item) => {
+    const equipment = item.equipment
+    return {
+      type: equipment.equipmentType.name,
+      description: equipment.description,
+      code: equipment.plateOrInternalCode ?? '-',
+      brandModel: [equipment.brand, equipment.model, equipment.year ? String(equipment.year) : ''].filter(Boolean).join(' '),
+    }
+  })
   const equipmentList =
-    contract.contractEquipment
-      .map((item, index) => {
-        const equipment = item.equipment
-        const code = equipment.plateOrInternalCode ? ` - ${equipment.plateOrInternalCode}` : ''
-        const brand = equipment.brand ? ` - ${equipment.brand}` : ''
-        const model = equipment.model ? ` ${equipment.model}` : ''
-        return `${index + 1}. ${equipment.equipmentType.name}: ${equipment.description}${code}${brand}${model}`
+    equipmentRows
+      .map((equipment, index) => {
+        const code = equipment.code && equipment.code !== '-' ? ` - ${equipment.code}` : ''
+        const brandModel = equipment.brandModel ? ` - ${equipment.brandModel}` : ''
+        return `${index + 1}. ${equipment.type}: ${equipment.description}${code}${brandModel}`
       })
       .join('\n') || 'Sin equipos registrados'
+
+  const startDate = formatDate(contract.startDate)
+  const endDate = formatDate(contract.endDate)
+  const billingMode = billingModeLabel(contract.billingMode)
+  const rate = formatMoney(contract.rate, contract.currency)
 
   const rendered = renderTemplate(template, {
     contractNumber: contract.contractNumber,
@@ -332,17 +599,36 @@ export async function generateContractPdf(id: string, userId?: string) {
     supplierName: contract.supplier.businessName,
     supplierRuc: contract.supplier.ruc,
     siteName: contract.site.name,
-    startDate: formatDate(contract.startDate),
-    endDate: formatDate(contract.endDate),
-    billingMode: contract.billingMode === 'HORA' ? 'hora' : 'dia',
-    rate: formatCurrency(contract.rate),
+    startDate,
+    endDate,
+    billingMode,
+    rate,
     currency: contract.currency,
     invoiceDueDays: String(contract.invoiceDueDays),
     equipmentList,
     notes: contract.notes?.trim() || 'Sin observaciones registradas.',
   })
 
-  const pdf = await buildPdfBuffer(`Contrato ${contract.contractNumber}`, rendered)
+  const pdf = await buildPdfBuffer(
+    {
+      title: 'Contrato de servicio de alquiler',
+      contractNumber: contract.contractNumber,
+      issueDate: formatDate(new Date()),
+      companyName: 'INDUSTRIAS Y SERVICIOS ELECTRO-MECANICOS SRL',
+      companyRuc: '20220199968',
+      supplierName: contract.supplier.businessName,
+      supplierRuc: contract.supplier.ruc,
+      siteName: contract.site.name,
+      startDate,
+      endDate,
+      billingMode,
+      rate,
+      currency: contract.currency,
+      invoiceDueDays: String(contract.invoiceDueDays),
+      equipment: equipmentRows,
+    },
+    rendered,
+  )
   const destinationFolder = path.join(contract.folderPath, 'contrato')
   const generatedAt = new Date().toISOString().replace(/[:.]/g, '-')
   const fileName = `${normalizeFolderName(`contrato-generado-${contract.contractNumber}`)}-${generatedAt}.pdf`
