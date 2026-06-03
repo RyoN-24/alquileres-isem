@@ -1256,7 +1256,7 @@ function renderView(
             id: item.id,
             number: item.contractNumber,
             supplier: item.supplier.businessName,
-            site: item.site.name,
+            site: item.projectName ? `${item.site.name} - ${item.projectName}` : item.site.name,
             equipment: item.contractEquipment
               .map((entry) => entry.equipment.plateOrInternalCode ?? entry.equipment.description)
               .join(', '),
@@ -1292,7 +1292,7 @@ function renderView(
         columns={[
           ['Numero', 'number'],
           ['Proveedor', 'supplier'],
-          ['Sede', 'site'],
+          ['Localidad / obra', 'site'],
           ['Equipo', 'equipment'],
           ['Tarifa', 'rate'],
           ['Estado', 'status'],
@@ -2874,6 +2874,7 @@ function ContractForm({
       supplierId,
       siteId: String(formData.get('siteId') ?? ''),
       contractNumber: String(formData.get('contractNumber') ?? ''),
+      projectName: String(formData.get('projectName') ?? ''),
       equipmentIds,
       startDate: String(formData.get('startDate') ?? ''),
       endDate: String(formData.get('endDate') ?? ''),
@@ -2925,7 +2926,7 @@ function ContractForm({
             </select>
           </label>
           <label>
-            Sede
+            Localidad
             <select name="siteId" required>
               <option value="">Seleccionar</option>
               {sites.filter((site) => site.isActive).map((site) => (
@@ -2934,6 +2935,10 @@ function ContractForm({
                 </option>
               ))}
             </select>
+          </label>
+          <label>
+            Nombre de obra/proyecto
+            <input name="projectName" placeholder="Ej. Mantenimiento planta concentradora" />
           </label>
           <label>
             Numero
@@ -3797,7 +3802,10 @@ function ContractDetail({
         <div className="section-heading">
           <div>
             <h2 id="contract-detail-title">{contract.contractNumber}</h2>
-            <p>{contract.supplier.businessName} - {contract.site.name}</p>
+            <p>
+              {contract.supplier.businessName} - {contract.site.name}
+              {contract.projectName ? ` - ${contract.projectName}` : ''}
+            </p>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             {onDelete && (
@@ -4717,7 +4725,7 @@ function SettingsView({
             />
           </label>
           <p className="helper-text">
-            Variables disponibles: {'{{contractNumber}}'}, {'{{supplierName}}'}, {'{{supplierRuc}}'}, {'{{siteName}}'}, {'{{equipmentList}}'}, {'{{startDate}}'}, {'{{endDate}}'}, {'{{billingMode}}'}, {'{{rate}}'}, {'{{currency}}'}, {'{{invoiceDueDays}}'}, {'{{notes}}'}.
+            Variables disponibles: {'{{contractNumber}}'}, {'{{supplierName}}'}, {'{{supplierRuc}}'}, {'{{siteName}}'}, {'{{projectName}}'}, {'{{equipmentList}}'}, {'{{startDate}}'}, {'{{endDate}}'}, {'{{billingMode}}'}, {'{{rate}}'}, {'{{currency}}'}, {'{{invoiceDueDays}}'}, {'{{notes}}'}.
           </p>
           <button type="submit" className="primary-button" disabled={isSubmittingTemplate}>
             {isSubmittingTemplate ? 'Guardando...' : 'Guardar plantilla'}

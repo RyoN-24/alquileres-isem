@@ -178,6 +178,7 @@ model Contract {
   supplierId         String
   siteId             String
   contractNumber     String              @unique
+  projectName        String?
   startDate          DateTime
   endDate            DateTime
   billingMode        BillingMode

@@ -130,6 +130,25 @@ class DocumentStorageService {
     return { type: 'signed-url' as const, url: data.signedUrl }
   }
 
+  async deleteFile(storagePath: string) {
+    if (!this.isCloudStorage()) {
+      await fs.unlink(storagePath).catch(() => undefined)
+      return
+    }
+
+    if (!this.supabase) {
+      throw new HttpError(500, 'SUPABASE_NOT_CONFIGURED', 'Supabase Storage no esta configurado')
+    }
+
+    const { error } = await this.supabase.storage
+      .from(env.SUPABASE_STORAGE_BUCKET)
+      .remove([storagePath])
+
+    if (error) {
+      throw new HttpError(500, 'SUPABASE_DELETE_FAILED', `No se pudo eliminar el archivo anterior en Supabase: ${error.message}`)
+    }
+  }
+
   createReadStream(storagePath: string) {
     return createReadStream(storagePath)
   }

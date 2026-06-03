@@ -4,6 +4,7 @@ export const createContractSchema = z.object({
   supplierId: z.string().uuid(),
   siteId: z.string(),
   contractNumber: z.string().min(2),
+  projectName: z.string().trim().max(160).optional(),
   equipmentIds: z.array(z.string().uuid()).min(1),
   startDate: z.string().date(),
   endDate: z.string().date(),
@@ -31,4 +32,3 @@ export const listContractsQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(20),
 })
-

@@ -58,6 +58,7 @@ type ContractPdfContext = {
   supplierName: string
   supplierRuc: string
   siteName: string
+  projectName: string
   startDate: string
   endDate: string
   billingMode: string
@@ -301,7 +302,8 @@ async function buildPdfBuffer(context: ContractPdfContext, body: string) {
 
   drawSectionTitle(doc, 'Resumen operativo y económico')
   drawKeyValueGrid(doc, [
-    { label: 'Sede u obra', value: context.siteName },
+    { label: 'Localidad', value: context.siteName },
+    { label: 'Obra / proyecto', value: context.projectName },
     { label: 'Vigencia', value: `${context.startDate} al ${context.endDate}` },
     { label: 'Modalidad', value: `Por ${context.billingMode}` },
     { label: 'Tarifa base', value: context.rate },
@@ -472,6 +474,7 @@ export async function createContract(input: CreateContractInput, userId?: string
       supplierId: input.supplierId,
       siteId: input.siteId,
       contractNumber: input.contractNumber,
+      projectName: input.projectName,
       startDate: parseDate(input.startDate),
       endDate: parseDate(input.endDate),
       billingMode: input.billingMode,
@@ -542,6 +545,7 @@ export async function updateContract(id: string, input: UpdateContractInput, use
       data: {
         siteId: input.siteId,
         contractNumber: input.contractNumber,
+        projectName: input.projectName,
         startDate: input.startDate ? parseDate(input.startDate) : undefined,
         endDate: input.endDate ? parseDate(input.endDate) : undefined,
         billingMode: input.billingMode,
@@ -625,6 +629,7 @@ export async function generateContractPdf(id: string, userId?: string) {
   const endDate = formatDate(contract.endDate)
   const billingMode = billingModeLabel(contract.billingMode)
   const rate = formatMoney(contract.rate, contract.currency)
+  const projectName = contract.projectName?.trim() || 'No especificada'
 
   const rendered = renderTemplate(template, {
     contractNumber: contract.contractNumber,
@@ -633,6 +638,7 @@ export async function generateContractPdf(id: string, userId?: string) {
     supplierName: contract.supplier.businessName,
     supplierRuc: contract.supplier.ruc,
     siteName: contract.site.name,
+    projectName,
     startDate,
     endDate,
     billingMode,
@@ -653,6 +659,7 @@ export async function generateContractPdf(id: string, userId?: string) {
       supplierName: contract.supplier.businessName,
       supplierRuc: contract.supplier.ruc,
       siteName: contract.site.name,
+      projectName,
       startDate,
       endDate,
       billingMode,
@@ -673,6 +680,24 @@ export async function generateContractPdf(id: string, userId?: string) {
     mimeType: 'application/pdf',
   })
 
+  const previousGeneratedContracts = await prisma.attachment.findMany({
+    where: {
+      entityType: 'CONTRACT',
+      entityId: contract.id,
+      category: 'CONTRATO_GENERADO',
+    },
+  })
+  await Promise.all(
+    previousGeneratedContracts.map((attachment) => documentStorage.deleteFile(attachment.storagePath)),
+  )
+  await prisma.attachment.deleteMany({
+    where: {
+      entityType: 'CONTRACT',
+      entityId: contract.id,
+      category: 'CONTRATO_GENERADO',
+    },
+  })
+
   const attachment = await prisma.attachment.create({
     data: {
       entityType: 'CONTRACT',
@@ -683,6 +708,7 @@ export async function generateContractPdf(id: string, userId?: string) {
       fileSizeBytes: pdf.byteLength,
       storagePath,
       category: 'CONTRATO_GENERADO',
+      version: 1,
       uploadedById: userId,
     },
   })

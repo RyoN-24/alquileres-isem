@@ -87,6 +87,10 @@ async function main() {
       contractTemplate.value.includes('RESPONSABILIDAD OPERATIVA') &&
       contractTemplate.value.includes('Vehiculo') &&
       contractTemplate.value.includes('terminos pactados')
+    ) ||
+    (
+      contractTemplate.value.includes('RESPONSABILIDAD OPERATIVA') &&
+      !contractTemplate.value.includes('{{projectName}}')
     )
 
   if (shouldRefreshLegacyTemplate) {

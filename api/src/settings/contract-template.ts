@@ -3,7 +3,7 @@ export const DEFAULT_CONTRACT_TEMPLATE = `CONTRATO DE SERVICIO DE ALQUILER DE EQ
 Conste por el presente documento el Contrato de Servicio de Alquiler de Equipo, Maquinaria y/o Vehículo que celebran, de una parte, {{companyName}}, con RUC {{companyRuc}}, a quien en adelante se denominará EL CONTRATANTE; y, de la otra parte, {{supplierName}}, con RUC {{supplierRuc}}, a quien en adelante se denominará EL PROVEEDOR. Ambas partes declaran contar con capacidad suficiente para contratar y obligarse conforme a los términos del presente documento.
 
 PRIMERA: OBJETO
-EL PROVEEDOR se obliga a poner a disposición de EL CONTRATANTE el/los equipo(s), maquinaria(s) y/o vehículo(s) detallado(s) en el cuadro operativo del presente contrato, para su utilización en la sede u obra {{siteName}}, conforme a las condiciones comerciales, operativas y documentarias pactadas por las partes.
+EL PROVEEDOR se obliga a poner a disposición de EL CONTRATANTE el/los equipo(s), maquinaria(s) y/o vehículo(s) detallado(s) en el cuadro operativo del presente contrato, para su utilización en la localidad {{siteName}}, obra/proyecto {{projectName}}, conforme a las condiciones comerciales, operativas y documentarias pactadas por las partes.
 
 SEGUNDA: PLAZO
 El servicio inicia el {{startDate}} y culmina el {{endDate}}. Cualquier ampliación, suspensión, paralización o cierre anticipado deberá constar por escrito, mediante correo electrónico, orden de servicio, acta, comunicación formal o documento equivalente aceptado por las partes.

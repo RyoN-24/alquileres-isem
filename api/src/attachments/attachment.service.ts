@@ -178,12 +178,24 @@ export async function listAttachments(params: {
   entityType?: AttachmentEntityType
   entityId?: string
 }) {
-  return prisma.attachment.findMany({
+  const attachments = await prisma.attachment.findMany({
     where: {
       entityType: params.entityType,
       entityId: params.entityId,
     },
     orderBy: { createdAt: 'desc' },
+  })
+
+  if (params.entityType !== 'CONTRACT' || !params.entityId) {
+    return attachments
+  }
+
+  let latestGeneratedContractSeen = false
+  return attachments.filter((attachment) => {
+    if (attachment.category !== 'CONTRATO_GENERADO') return true
+    if (latestGeneratedContractSeen) return false
+    latestGeneratedContractSeen = true
+    return true
   })
 }
 

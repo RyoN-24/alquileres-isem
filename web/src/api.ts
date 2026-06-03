@@ -140,6 +140,7 @@ export type ApiContract = {
   supplierId: string
   siteId: string
   contractNumber: string
+  projectName: string | null
   startDate: string
   endDate: string
   billingMode: 'HORA' | 'DIA'
@@ -160,6 +161,7 @@ export type CreateContractInput = {
   supplierId: string
   siteId: string
   contractNumber: string
+  projectName?: string
   equipmentIds: string[]
   startDate: string
   endDate: string
