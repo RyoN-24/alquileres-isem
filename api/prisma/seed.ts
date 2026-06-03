@@ -82,6 +82,11 @@ async function main() {
     (
       contractTemplate.value.includes('Conste por el presente documento el contrato de servicio de alquiler que celebran') &&
       !contractTemplate.value.includes('RESPONSABILIDAD OPERATIVA')
+    ) ||
+    (
+      contractTemplate.value.includes('RESPONSABILIDAD OPERATIVA') &&
+      contractTemplate.value.includes('Vehiculo') &&
+      contractTemplate.value.includes('terminos pactados')
     )
 
   if (shouldRefreshLegacyTemplate) {

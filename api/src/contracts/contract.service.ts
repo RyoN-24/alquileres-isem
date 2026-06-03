@@ -29,7 +29,11 @@ function formatMoney(value: unknown, currency: string) {
 }
 
 function billingModeLabel(value: string) {
-  return value === 'HORA' ? 'hora' : 'dia'
+  return value === 'HORA' ? 'hora' : 'día'
+}
+
+function spanishDisplayLabel(value: string) {
+  return value.replace(/\bVehiculo\b/g, 'Vehículo')
 }
 
 function renderTemplate(template: string, values: Record<string, string>) {
@@ -138,7 +142,7 @@ function drawEquipmentTable(doc: PDFKit.PDFDocument, equipment: ContractPdfEquip
   const startX = doc.page.margins.left
   const pageWidth = pdfContentWidth(doc)
   const widths = [28, 112, 190, 78, pageWidth - 408]
-  const headers = ['#', 'Tipo', 'Descripcion', 'Placa/Codigo', 'Marca/Modelo']
+  const headers = ['#', 'Tipo', 'Descripción', 'Placa/Código', 'Marca/Modelo']
   const rowHeight = 25
 
   ensurePdfSpace(doc, rowHeight * 2)
@@ -186,7 +190,7 @@ function getClauseBlocks(body: string) {
   let current: { title: string; text: string[] } | null = null
 
   for (const line of lines) {
-    if (/^(PRIMERA|SEGUNDA|TERCERA|CUARTA|QUINTA|SEXTA|SEPTIMA|OCTAVA|NOVENA|DECIMA|DECIMA\s+PRIMERA|D[ÉE]CIMA|D[ÉE]CIMA\s+PRIMERA):/i.test(line)) {
+    if (/^(PRIMERA|SEGUNDA|TERCERA|CUARTA|QUINTA|SEXTA|S[ÉE]PTIMA|OCTAVA|NOVENA|D[ÉE]CIMA|D[ÉE]CIMA\s+PRIMERA):/i.test(line)) {
       current = { title: line, text: [] }
       blocks.push(current)
       continue
@@ -295,20 +299,20 @@ async function buildPdfBuffer(context: ContractPdfContext, body: string) {
     { label: 'Proveedor', value: `${context.supplierName} - RUC ${context.supplierRuc}` },
   ])
 
-  drawSectionTitle(doc, 'Resumen operativo y economico')
+  drawSectionTitle(doc, 'Resumen operativo y económico')
   drawKeyValueGrid(doc, [
     { label: 'Sede u obra', value: context.siteName },
     { label: 'Vigencia', value: `${context.startDate} al ${context.endDate}` },
     { label: 'Modalidad', value: `Por ${context.billingMode}` },
     { label: 'Tarifa base', value: context.rate },
     { label: 'Moneda', value: context.currency },
-    { label: 'Vencimiento de facturas', value: `${context.invoiceDueDays} dias calendario` },
+    { label: 'Vencimiento de facturas', value: `${context.invoiceDueDays} días calendario` },
   ], 3)
 
   drawSectionTitle(doc, 'Equipos incluidos')
   drawEquipmentTable(doc, context.equipment)
 
-  drawSectionTitle(doc, 'Clausulas contractuales')
+  drawSectionTitle(doc, 'Cláusulas contractuales')
   drawClauses(doc, body)
   drawSignatures(doc, context)
 
@@ -320,7 +324,7 @@ async function buildPdfBuffer(context: ContractPdfContext, body: string) {
       .fontSize(7)
       .fillColor('#7a8a9a')
       .text(
-        `Contrato ${context.contractNumber} | Generado el ${context.issueDate} | Pagina ${i + 1} de ${range.count}`,
+        `Contrato ${context.contractNumber} | Generado el ${context.issueDate} | Página ${i + 1} de ${range.count}`,
         doc.page.margins.left,
         doc.page.height - 30,
         { align: 'center' },
@@ -602,7 +606,7 @@ export async function generateContractPdf(id: string, userId?: string) {
   const equipmentRows = contract.contractEquipment.map((item) => {
     const equipment = item.equipment
     return {
-      type: equipment.equipmentType.name,
+      type: spanishDisplayLabel(equipment.equipmentType.name),
       description: equipment.description,
       code: equipment.plateOrInternalCode ?? '-',
       brandModel: [equipment.brand, equipment.model, equipment.year ? String(equipment.year) : ''].filter(Boolean).join(' '),
