@@ -67,16 +67,32 @@ function ensurePdfSpace(doc: PDFKit.PDFDocument, requiredHeight: number) {
   if (doc.y + requiredHeight > doc.page.height - doc.page.margins.bottom) {
     doc.addPage()
   }
+  doc.x = doc.page.margins.left
+}
+
+function resetPdfCursor(doc: PDFKit.PDFDocument, y = doc.y) {
+  doc.x = doc.page.margins.left
+  doc.y = y
+}
+
+function pdfContentWidth(doc: PDFKit.PDFDocument) {
+  return doc.page.width - doc.page.margins.left - doc.page.margins.right
 }
 
 function drawSectionTitle(doc: PDFKit.PDFDocument, title: string) {
   ensurePdfSpace(doc, 32)
+  resetPdfCursor(doc)
   doc.moveDown(0.6)
+  resetPdfCursor(doc)
+  const titleY = doc.y
   doc
     .font('Helvetica-Bold')
     .fontSize(9)
     .fillColor('#0f2742')
-    .text(title.toUpperCase(), { characterSpacing: 0.2 })
+    .text(title.toUpperCase(), doc.page.margins.left, titleY, {
+      characterSpacing: 0.2,
+      width: pdfContentWidth(doc),
+    })
   doc
     .moveTo(doc.page.margins.left, doc.y + 4)
     .lineTo(doc.page.width - doc.page.margins.right, doc.y + 4)
@@ -84,11 +100,12 @@ function drawSectionTitle(doc: PDFKit.PDFDocument, title: string) {
     .lineWidth(1)
     .stroke()
   doc.moveDown(0.8)
+  resetPdfCursor(doc)
 }
 
 function drawKeyValueGrid(doc: PDFKit.PDFDocument, items: Array<{ label: string; value: string }>, columns = 2) {
   const startX = doc.page.margins.left
-  const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right
+  const pageWidth = pdfContentWidth(doc)
   const gap = 10
   const width = (pageWidth - gap * (columns - 1)) / columns
   const rowHeight = 44
@@ -113,12 +130,13 @@ function drawKeyValueGrid(doc: PDFKit.PDFDocument, items: Array<{ label: string;
     })
 
     doc.y = rowY + rowHeight + 8
+    resetPdfCursor(doc)
   }
 }
 
 function drawEquipmentTable(doc: PDFKit.PDFDocument, equipment: ContractPdfEquipment[]) {
   const startX = doc.page.margins.left
-  const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right
+  const pageWidth = pdfContentWidth(doc)
   const widths = [28, 112, 190, 78, pageWidth - 408]
   const headers = ['#', 'Tipo', 'Descripcion', 'Placa/Codigo', 'Marca/Modelo']
   const rowHeight = 25
@@ -152,8 +170,10 @@ function drawEquipmentTable(doc: PDFKit.PDFDocument, equipment: ContractPdfEquip
       x += widths[cellIndex]
     })
     doc.y = y + rowHeight
+    resetPdfCursor(doc)
   })
   doc.moveDown(0.6)
+  resetPdfCursor(doc)
 }
 
 function getClauseBlocks(body: string) {
@@ -184,17 +204,25 @@ function drawClauses(doc: PDFKit.PDFDocument, body: string) {
   const clauses = getClauseBlocks(body)
   for (const clause of clauses) {
     ensurePdfSpace(doc, 70)
-    doc.font('Helvetica-Bold').fontSize(9.2).fillColor('#0f2742').text(clause.title)
+    resetPdfCursor(doc)
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(9.2)
+      .fillColor('#0f2742')
+      .text(clause.title, doc.page.margins.left, doc.y, { width: pdfContentWidth(doc) })
     doc.moveDown(0.25)
+    resetPdfCursor(doc)
     doc
       .font('Helvetica')
       .fontSize(8.8)
       .fillColor('#26384c')
-      .text(clause.text.join('\n'), {
+      .text(clause.text.join('\n'), doc.page.margins.left, doc.y, {
+        width: pdfContentWidth(doc),
         align: 'justify',
         lineGap: 3,
       })
     doc.moveDown(0.7)
+    resetPdfCursor(doc)
   }
 }
 
@@ -202,7 +230,7 @@ function drawSignatures(doc: PDFKit.PDFDocument, context: ContractPdfContext) {
   ensurePdfSpace(doc, 110)
   doc.moveDown(1)
   const startX = doc.page.margins.left
-  const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right
+  const pageWidth = pdfContentWidth(doc)
   const boxWidth = (pageWidth - 28) / 2
   const y = doc.y + 24
 
@@ -224,6 +252,7 @@ function drawSignatures(doc: PDFKit.PDFDocument, context: ContractPdfContext) {
   })
 
   doc.y = y + 62
+  resetPdfCursor(doc)
 }
 
 async function buildPdfBuffer(context: ContractPdfContext, body: string) {
@@ -259,6 +288,7 @@ async function buildPdfBuffer(context: ContractPdfContext, body: string) {
     .text(context.contractNumber, doc.page.width - 164, 53, { width: 108, align: 'center' })
 
   doc.y = 122
+  resetPdfCursor(doc, 122)
   drawSectionTitle(doc, 'Partes contratantes')
   drawKeyValueGrid(doc, [
     { label: 'Contratante', value: `${context.companyName} - RUC ${context.companyRuc}` },
