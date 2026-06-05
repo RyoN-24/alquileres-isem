@@ -1,4 +1,5 @@
 import path from 'node:path'
+import ExcelJS from 'exceljs'
 import { Prisma } from '@prisma/client'
 import PDFDocument from 'pdfkit'
 import { z } from 'zod'
@@ -11,6 +12,8 @@ import { createContractSchema, updateContractSchema } from './contract.schemas'
 
 type CreateContractInput = z.infer<typeof createContractSchema>
 type UpdateContractInput = z.infer<typeof updateContractSchema>
+
+const SERVICE_ORDER_TEMPLATE_PATH = path.resolve(process.cwd(), 'src/templates/orden-servicio-template.xlsx')
 
 function parseDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`)
@@ -26,6 +29,72 @@ function formatMoney(value: unknown, currency: string) {
     maximumFractionDigits: 2,
   })
   return currency === 'PEN' ? `S/ ${amount}` : `USD ${amount}`
+}
+
+function formatShortDate(value: Date) {
+  return value.toISOString().slice(0, 10)
+}
+
+function dateDiffDaysInclusive(startDate: Date, endDate: Date) {
+  const msPerDay = 24 * 60 * 60 * 1000
+  const start = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate())
+  const end = Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate())
+  return Math.max(1, Math.floor((end - start) / msPerDay) + 1)
+}
+
+function supplierShortName(value: string) {
+  return normalizeFolderName(value)
+    .split('-')
+    .filter((part) => !['SAC', 'S.A.C.', 'EIRL', 'E.I.R.L.', 'SRL', 'S.R.L.'].includes(part))
+    .slice(0, 2)
+    .join('-') || normalizeFolderName(value)
+}
+
+const units = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE']
+const teens = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE']
+const tens = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA']
+const hundreds = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS']
+
+function numberBelowHundredToWords(value: number): string {
+  if (value < 10) return units[value]
+  if (value < 20) return teens[value - 10]
+  if (value === 20) return 'VEINTE'
+  if (value < 30) return `VEINTI${units[value - 20].toLowerCase()}`.toUpperCase()
+  const ten = Math.floor(value / 10)
+  const unit = value % 10
+  return unit === 0 ? tens[ten] : `${tens[ten]} Y ${units[unit]}`
+}
+
+function numberBelowThousandToWords(value: number): string {
+  if (value === 0) return ''
+  if (value === 100) return 'CIEN'
+  if (value < 100) return numberBelowHundredToWords(value)
+  const hundred = Math.floor(value / 100)
+  const rest = value % 100
+  return rest === 0 ? hundreds[hundred] : `${hundreds[hundred]} ${numberBelowHundredToWords(rest)}`
+}
+
+function integerToSpanishWords(value: number): string {
+  if (value === 0) return 'CERO'
+  if (value < 1000) return numberBelowThousandToWords(value)
+  if (value < 1000000) {
+    const thousands = Math.floor(value / 1000)
+    const rest = value % 1000
+    const prefix = thousands === 1 ? 'MIL' : `${numberBelowThousandToWords(thousands)} MIL`
+    return rest === 0 ? prefix : `${prefix} ${numberBelowThousandToWords(rest)}`
+  }
+  const millions = Math.floor(value / 1000000)
+  const rest = value % 1000000
+  const prefix = millions === 1 ? 'UN MILLÓN' : `${numberBelowThousandToWords(millions)} MILLONES`
+  return rest === 0 ? prefix : `${prefix} ${integerToSpanishWords(rest)}`
+}
+
+function amountToWords(amount: number, currency: string) {
+  const rounded = Math.round(amount * 100) / 100
+  const integer = Math.floor(rounded)
+  const cents = Math.round((rounded - integer) * 100)
+  const currencyLabel = currency === 'USD' ? 'DÓLARES AMERICANOS' : 'SOLES'
+  return `SON: ${integerToSpanishWords(integer)} CON ${String(cents).padStart(2, '0')}/100 ${currencyLabel}`
 }
 
 function billingModeLabel(value: string) {
@@ -338,6 +407,179 @@ async function buildPdfBuffer(context: ContractPdfContext, body: string) {
     doc.on('end', resolve)
   })
 
+  return Buffer.concat(chunks)
+}
+
+type ServiceOrderContext = {
+  orderNumber: string
+  supplierName: string
+  supplierRuc: string
+  supplierAddress: string
+  supplierPhone: string
+  supplierEmail: string
+  supplierContact: string
+  contractNumber: string
+  siteName: string
+  projectName: string
+  quoteNumber: string
+  quoteDate: string
+  issueDate: string
+  description: string
+  equipmentCode: string
+  equipmentBrandModel: string
+  quantity: number
+  unit: string
+  unitPrice: number
+  subtotal: number
+  igv: number
+  total: number
+  currency: 'PEN' | 'USD'
+  paymentTerms: string
+  bankAccount: string
+  totalInWords: string
+}
+
+function buildServiceOrderContext(contract: Awaited<ReturnType<typeof getContract>>) {
+  const firstEquipment = contract.contractEquipment[0]?.equipment
+  const quantity = contract.billingMode === 'DIA'
+    ? dateDiffDaysInclusive(contract.startDate, contract.endDate)
+    : 1
+  const unit = contract.billingMode === 'DIA' ? 'día' : 'servicio'
+  const unitPrice = Number(contract.rate)
+  const subtotal = Math.round(quantity * unitPrice * 100) / 100
+  const igv = Math.round(subtotal * 18) / 100
+  const total = Math.round((subtotal + igv) * 100) / 100
+  const supplierCode = supplierShortName(contract.supplier.businessName)
+
+  return {
+    orderNumber: `OS ${contract.contractNumber}/${supplierCode}`,
+    supplierName: contract.supplier.businessName,
+    supplierRuc: contract.supplier.ruc,
+    supplierAddress: contract.supplier.address ?? '',
+    supplierPhone: contract.supplier.phone ?? '',
+    supplierEmail: contract.supplier.email ?? '',
+    supplierContact: contract.supplier.contactName ?? '',
+    contractNumber: contract.contractNumber,
+    siteName: contract.site.name,
+    projectName: contract.projectName?.trim() || 'No especificada',
+    quoteNumber: contract.contractNumber,
+    quoteDate: formatShortDate(contract.startDate),
+    issueDate: formatShortDate(new Date()),
+    description: [
+      `SERVICIO DE ALQUILER DE ${firstEquipment?.description ?? 'EQUIPO'}`,
+      `PERIODO: ${formatShortDate(contract.startDate)} AL ${formatShortDate(contract.endDate)}`,
+      `LOCALIDAD: ${contract.site.name}`,
+      `OBRA/PROYECTO: ${contract.projectName?.trim() || 'No especificada'}`,
+    ].join('\n'),
+    equipmentCode: firstEquipment?.plateOrInternalCode ?? '-',
+    equipmentBrandModel: [firstEquipment?.brand, firstEquipment?.model, firstEquipment?.year ? String(firstEquipment.year) : '']
+      .filter(Boolean)
+      .join(' ') || '-',
+    quantity,
+    unit,
+    unitPrice,
+    subtotal,
+    igv,
+    total,
+    currency: contract.currency,
+    paymentTerms: `A ${contract.invoiceDueDays} DÍAS`,
+    bankAccount: [contract.supplier.bankName, contract.supplier.bankAccountNumber].filter(Boolean).join(': '),
+    totalInWords: amountToWords(total, contract.currency),
+  }
+}
+
+async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
+  const workbook = new ExcelJS.Workbook()
+  await workbook.xlsx.readFile(SERVICE_ORDER_TEMPLATE_PATH)
+  const worksheet = workbook.getWorksheet('OC 26.07') ?? workbook.worksheets[0]
+
+  worksheet.getCell('E10').value = 'x'
+  worksheet.getCell('E11').value = context.supplierName
+  worksheet.getCell('K11').value = context.supplierRuc
+  worksheet.getCell('M11').value = context.orderNumber
+  worksheet.getCell('E12').value = context.supplierAddress
+  worksheet.getCell('M12').value = context.quoteNumber
+  worksheet.getCell('E13').value = context.supplierPhone
+  worksheet.getCell('K13').value = context.supplierEmail
+  worksheet.getCell('M13').value = context.quoteDate
+  worksheet.getCell('E14').value = context.supplierContact
+  worksheet.getCell('M14').value = `${context.siteName} - ${context.projectName}`
+  worksheet.getCell('D18').value = context.quantity
+  worksheet.getCell('F18').value = context.unit
+  worksheet.getCell('G18').value = context.description
+  worksheet.getCell('L18').value = context.unitPrice
+  worksheet.getCell('M18').value = { formula: 'L18*D18', result: context.subtotal }
+  worksheet.getCell('G22').value = `PLACA/CÓDIGO: ${context.equipmentCode}`
+  worksheet.getCell('G23').value = `MARCA/MODELO: ${context.equipmentBrandModel}`
+  worksheet.getCell('C46').value = context.totalInWords
+  worksheet.getCell('M46').value = { formula: 'M18', result: context.subtotal }
+  worksheet.getCell('M47').value = { formula: 'M46*0.18', result: context.igv }
+  worksheet.getCell('M48').value = { formula: 'M46+M47', result: context.total }
+  worksheet.getCell('G49').value = context.paymentTerms
+  worksheet.getCell('L49').value = context.bankAccount || '-'
+  worksheet.getCell('G52').value = `${context.siteName} - ${context.projectName}`
+  worksheet.getCell('G55').value = context.currency === 'USD' ? 'Moneda dólares' : 'Moneda soles'
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  return Buffer.from(buffer)
+}
+
+async function buildServiceOrderPdfBuffer(context: ServiceOrderContext) {
+  const doc = new PDFDocument({ margin: 44, size: 'A4' })
+  const chunks: Buffer[] = []
+  doc.on('data', (chunk: Buffer) => chunks.push(Buffer.from(chunk)))
+
+  doc.rect(0, 0, doc.page.width, 86).fill('#0f2742')
+  doc.font('Helvetica-Bold').fontSize(13).fillColor('#ffffff').text('ORDEN DE SERVICIO', 44, 30)
+  doc.font('Helvetica').fontSize(8).fillColor('#dce8f3').text('INDUSTRIAS Y SERVICIOS ELECTRO-MECÁNICOS S.R.L. | RUC 20220199968', 44, 50)
+  doc.font('Helvetica-Bold').fontSize(10).fillColor('#ffffff').text(context.orderNumber, 380, 34, { width: 160, align: 'right' })
+
+  doc.y = 110
+  drawSectionTitle(doc, 'Proveedor')
+  drawKeyValueGrid(doc, [
+    { label: 'Razón social', value: context.supplierName },
+    { label: 'RUC', value: context.supplierRuc },
+    { label: 'Contacto', value: context.supplierContact || '-' },
+    { label: 'Correo / teléfono', value: [context.supplierEmail, context.supplierPhone].filter(Boolean).join(' / ') || '-' },
+  ], 2)
+
+  drawSectionTitle(doc, 'Servicio')
+  drawKeyValueGrid(doc, [
+    { label: 'Contrato', value: context.contractNumber },
+    { label: 'Localidad', value: context.siteName },
+    { label: 'Obra / proyecto', value: context.projectName },
+    { label: 'Fecha de emisión', value: context.issueDate },
+  ], 2)
+
+  drawSectionTitle(doc, 'Detalle económico')
+  const startX = doc.page.margins.left
+  const width = pdfContentWidth(doc)
+  const rowHeight = 28
+  const rows = [
+    ['Cantidad', String(context.quantity)],
+    ['Unidad', context.unit],
+    ['Descripción', context.description.replace(/\n/g, ' | ')],
+    ['Precio unitario', formatMoney(context.unitPrice, context.currency)],
+    ['Subtotal', formatMoney(context.subtotal, context.currency)],
+    ['IGV 18%', formatMoney(context.igv, context.currency)],
+    ['Total', formatMoney(context.total, context.currency)],
+  ]
+  rows.forEach(([label, value], index) => {
+    const y = doc.y
+    doc.rect(startX, y, width, rowHeight).fillAndStroke(index % 2 === 0 ? '#ffffff' : '#f7fafc', '#d9e2ea')
+    doc.font('Helvetica-Bold').fontSize(8).fillColor('#53667a').text(label, startX + 8, y + 9, { width: 120 })
+    doc.font('Helvetica').fontSize(8).fillColor('#142033').text(value, startX + 140, y + 9, { width: width - 150 })
+    doc.y = y + rowHeight
+  })
+
+  doc.moveDown()
+  doc.font('Helvetica-Bold').fontSize(9).fillColor('#142033').text(context.totalInWords)
+  doc.moveDown()
+  doc.font('Helvetica').fontSize(8).fillColor('#26384c').text(`Forma de pago: ${context.paymentTerms}`)
+  doc.text(`Cuenta: ${context.bankAccount || '-'}`)
+
+  doc.end()
+  await new Promise<void>((resolve) => doc.on('end', resolve))
   return Buffer.concat(chunks)
 }
 
@@ -724,6 +966,104 @@ export async function generateContractPdf(id: string, userId?: string) {
   })
 
   return attachment
+}
+
+export async function generateServiceOrder(id: string, userId?: string) {
+  const contract = await getContract(id)
+
+  if (!contract.folderPath) {
+    throw new HttpError(404, 'CONTRACT_FOLDER_NOT_FOUND', 'No se encontro la carpeta del contrato')
+  }
+
+  const context = buildServiceOrderContext(contract)
+  const excelBuffer = await buildServiceOrderExcelBuffer(context)
+  const pdfBuffer = await buildServiceOrderPdfBuffer(context)
+  const destinationFolder = path.join(contract.folderPath, 'orden-servicio')
+  const generatedAt = new Date().toISOString().replace(/[:.]/g, '-')
+  const baseName = normalizeFolderName(`orden-servicio-${contract.contractNumber}`)
+
+  const previousGeneratedOrders = await prisma.attachment.findMany({
+    where: {
+      entityType: 'CONTRACT',
+      entityId: contract.id,
+      category: { in: ['ORDEN_SERVICIO_GENERADA', 'ORDEN_SERVICIO_GENERADA_PDF'] },
+    },
+  })
+  await Promise.all(
+    previousGeneratedOrders.map((attachment) => documentStorage.deleteFile(attachment.storagePath)),
+  )
+  await prisma.attachment.deleteMany({
+    where: {
+      entityType: 'CONTRACT',
+      entityId: contract.id,
+      category: { in: ['ORDEN_SERVICIO_GENERADA', 'ORDEN_SERVICIO_GENERADA_PDF'] },
+    },
+  })
+
+  const excelFileName = `${baseName}-${generatedAt}.xlsx`
+  const pdfFileName = `${baseName}-${generatedAt}.pdf`
+  const [excelStoragePath, pdfStoragePath] = await Promise.all([
+    documentStorage.saveBuffer({
+      buffer: excelBuffer,
+      destinationFolder,
+      fileName: excelFileName,
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }),
+    documentStorage.saveBuffer({
+      buffer: pdfBuffer,
+      destinationFolder,
+      fileName: pdfFileName,
+      mimeType: 'application/pdf',
+    }),
+  ])
+
+  const [excelAttachment, pdfAttachment] = await prisma.$transaction([
+    prisma.attachment.create({
+      data: {
+        entityType: 'CONTRACT',
+        entityId: contract.id,
+        supplierId: contract.supplierId,
+        fileName: excelFileName,
+        fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        fileSizeBytes: excelBuffer.byteLength,
+        storagePath: excelStoragePath,
+        category: 'ORDEN_SERVICIO_GENERADA',
+        version: 1,
+        uploadedById: userId,
+      },
+    }),
+    prisma.attachment.create({
+      data: {
+        entityType: 'CONTRACT',
+        entityId: contract.id,
+        supplierId: contract.supplierId,
+        fileName: pdfFileName,
+        fileType: 'application/pdf',
+        fileSizeBytes: pdfBuffer.byteLength,
+        storagePath: pdfStoragePath,
+        category: 'ORDEN_SERVICIO_GENERADA_PDF',
+        version: 1,
+        uploadedById: userId,
+      },
+    }),
+    prisma.auditLog.create({
+      data: {
+        userId,
+        entityType: 'CONTRACT',
+        entityId: contract.id,
+        action: 'GENERATE_SERVICE_ORDER',
+        metadata: {
+          orderNumber: context.orderNumber,
+          excelFileName,
+          pdfFileName,
+          excelStoragePath,
+          pdfStoragePath,
+        },
+      },
+    }),
+  ])
+
+  return { data: [excelAttachment, pdfAttachment] }
 }
 
 export async function deleteContract(id: string, userId?: string) {

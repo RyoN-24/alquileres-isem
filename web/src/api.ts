@@ -570,6 +570,13 @@ export async function generateContractPdf(token: string, id: string) {
   })
 }
 
+export async function generateServiceOrder(token: string, id: string) {
+  return request<{ data: ApiAttachment[] }>(`/api/v1/contracts/${id}/generate-service-order`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}
+
 export async function listValuations(token: string) {
   return request<{ data: ApiValuation[] }>('/api/v1/valuations', {
     headers: { Authorization: `Bearer ${token}` },

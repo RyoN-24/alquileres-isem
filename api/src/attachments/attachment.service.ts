@@ -190,11 +190,13 @@ export async function listAttachments(params: {
     return attachments
   }
 
-  let latestGeneratedContractSeen = false
+  const latestGeneratedSeen = new Set<string>()
   return attachments.filter((attachment) => {
-    if (attachment.category !== 'CONTRATO_GENERADO') return true
-    if (latestGeneratedContractSeen) return false
-    latestGeneratedContractSeen = true
+    if (!['CONTRATO_GENERADO', 'ORDEN_SERVICIO_GENERADA', 'ORDEN_SERVICIO_GENERADA_PDF'].includes(attachment.category)) {
+      return true
+    }
+    if (latestGeneratedSeen.has(attachment.category)) return false
+    latestGeneratedSeen.add(attachment.category)
     return true
   })
 }

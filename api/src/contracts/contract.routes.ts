@@ -5,6 +5,7 @@ import {
   createContract,
   deleteContract,
   generateContractPdf,
+  generateServiceOrder,
   getContract,
   listContracts,
   updateContract,
@@ -57,6 +58,14 @@ contractRouter.post(
   requireRole('ADMIN', 'OPERATIVO'),
   asyncHandler(async (req, res) => {
     res.status(201).json(await generateContractPdf(String(req.params.id), req.user?.id))
+  }),
+)
+
+contractRouter.post(
+  '/:id/generate-service-order',
+  requireRole('ADMIN', 'OPERATIVO'),
+  asyncHandler(async (req, res) => {
+    res.status(201).json(await generateServiceOrder(String(req.params.id), req.user?.id))
   }),
 )
 

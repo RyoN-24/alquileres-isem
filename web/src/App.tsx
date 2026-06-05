@@ -42,6 +42,7 @@ import {
   downloadAttachment,
   downloadImportTemplate,
   generateContractPdf,
+  generateServiceOrder,
   getAlertSettings,
   getApiConfigurationError,
   getContractTemplate,
@@ -734,6 +735,13 @@ function App() {
     setDetailAttachments(result.data)
   }
 
+  const handleGenerateServiceOrder = async (contract: ApiContract) => {
+    if (!token) return
+    await generateServiceOrder(token, contract.id)
+    const result = await listAttachments(token, { entityType: 'CONTRACT', entityId: contract.id })
+    setDetailAttachments(result.data)
+  }
+
   const handleDownloadImportTemplate = async () => {
     if (!token) return
     const blob = await downloadImportTemplate(token)
@@ -1045,6 +1053,7 @@ function App() {
           onUploadAttachment={handleDetailAttachmentUpload}
           onDownloadAttachment={handleAttachmentDownload}
           onGeneratePdf={handleGenerateContractPdf}
+          onGenerateServiceOrder={handleGenerateServiceOrder}
           onDelete={() => handleDeleteContract(detailContract.id)}
           onClose={() => {
             setDetailContract(null)
@@ -3757,6 +3766,7 @@ function ContractDetail({
   onUploadAttachment,
   onDownloadAttachment,
   onGeneratePdf,
+  onGenerateServiceOrder,
   onDelete,
   onClose,
 }: {
@@ -3772,10 +3782,12 @@ function ContractDetail({
   }) => Promise<void>
   onDownloadAttachment: (attachment: ApiAttachment) => Promise<void>
   onGeneratePdf: (contract: ApiContract) => Promise<void>
+  onGenerateServiceOrder: (contract: ApiContract) => Promise<void>
   onDelete?: () => void
   onClose: () => void
 }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const [isGeneratingServiceOrder, setIsGeneratingServiceOrder] = useState(false)
   const [generatePdfError, setGeneratePdfError] = useState('')
   const contractValuations = valuations.filter((valuation) => valuation.contractId === contract.id)
   const contractInvoices = invoices.filter((invoice) => invoice.contractId === contract.id)
@@ -3869,6 +3881,24 @@ function ContractDetail({
             >
               {isGeneratingPdf ? 'Generando...' : 'Generar PDF'}
             </button>
+            <button
+              type="button"
+              className="primary-button"
+              disabled={isGeneratingServiceOrder}
+              onClick={async () => {
+                setIsGeneratingServiceOrder(true)
+                setGeneratePdfError('')
+                try {
+                  await onGenerateServiceOrder(contract)
+                } catch (error) {
+                  setGeneratePdfError(error instanceof Error ? error.message : 'No se pudo generar la orden de servicio')
+                } finally {
+                  setIsGeneratingServiceOrder(false)
+                }
+              }}
+            >
+              {isGeneratingServiceOrder ? 'Generando OS...' : 'Generar OS'}
+            </button>
           </div>
         </div>
         {generatePdfError && <div className="inline-alert">{generatePdfError}</div>}
@@ -3911,6 +3941,8 @@ function ContractDetail({
               { value: 'CONTRATO_FIRMADO', label: 'Contrato firmado' },
               { value: 'ORDEN_SERVICIO', label: 'Orden de servicio' },
               { value: 'CONTRATO_GENERADO', label: 'Contrato generado' },
+              { value: 'ORDEN_SERVICIO_GENERADA', label: 'OS generada Excel' },
+              { value: 'ORDEN_SERVICIO_GENERADA_PDF', label: 'OS generada PDF' },
               { value: 'OTRO', label: 'Otro documento' },
             ]}
             onUploadAttachment={onUploadAttachment}
