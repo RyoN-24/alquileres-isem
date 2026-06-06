@@ -1,4 +1,8 @@
+import { execFile } from 'node:child_process'
+import fs from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
+import { promisify } from 'node:util'
 import ExcelJS from 'exceljs'
 import { Prisma } from '@prisma/client'
 import PDFDocument from 'pdfkit'
@@ -14,6 +18,7 @@ type CreateContractInput = z.infer<typeof createContractSchema>
 type UpdateContractInput = z.infer<typeof updateContractSchema>
 
 const SERVICE_ORDER_TEMPLATE_PATH = path.resolve(process.cwd(), 'src/templates/orden-servicio-template.xlsx')
+const execFileAsync = promisify(execFile)
 
 function parseDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`)
@@ -35,11 +40,11 @@ function formatShortDate(value: Date) {
   return value.toISOString().slice(0, 10)
 }
 
-function dateDiffDaysInclusive(startDate: Date, endDate: Date) {
+function serviceOrderDays(startDate: Date, endDate: Date) {
   const msPerDay = 24 * 60 * 60 * 1000
   const start = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate())
   const end = Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate())
-  return Math.max(1, Math.floor((end - start) / msPerDay) + 1)
+  return Math.max(1, Math.floor((end - start) / msPerDay))
 }
 
 function supplierShortName(value: string) {
@@ -424,7 +429,9 @@ type ServiceOrderContext = {
   quoteNumber: string
   quoteDate: string
   issueDate: string
-  description: string
+  serviceTitle: string
+  periodLine: string
+  locationLine: string
   equipmentCode: string
   equipmentBrandModel: string
   quantity: number
@@ -442,7 +449,7 @@ type ServiceOrderContext = {
 function buildServiceOrderContext(contract: Awaited<ReturnType<typeof getContract>>) {
   const firstEquipment = contract.contractEquipment[0]?.equipment
   const quantity = contract.billingMode === 'DIA'
-    ? dateDiffDaysInclusive(contract.startDate, contract.endDate)
+    ? serviceOrderDays(contract.startDate, contract.endDate)
     : 1
   const unit = contract.billingMode === 'DIA' ? 'día' : 'servicio'
   const unitPrice = Number(contract.rate)
@@ -465,12 +472,9 @@ function buildServiceOrderContext(contract: Awaited<ReturnType<typeof getContrac
     quoteNumber: contract.contractNumber,
     quoteDate: formatShortDate(contract.startDate),
     issueDate: formatShortDate(new Date()),
-    description: [
-      `SERVICIO DE ALQUILER DE ${firstEquipment?.description ?? 'EQUIPO'}`,
-      `PERIODO: ${formatShortDate(contract.startDate)} AL ${formatShortDate(contract.endDate)}`,
-      `LOCALIDAD: ${contract.site.name}`,
-      `OBRA/PROYECTO: ${contract.projectName?.trim() || 'No especificada'}`,
-    ].join('\n'),
+    serviceTitle: `SERVICIO DE ALQUILER DE ${firstEquipment?.description ?? 'EQUIPO'}`,
+    periodLine: `PERÍODO: ${formatShortDate(contract.startDate)} AL ${formatShortDate(contract.endDate)}`,
+    locationLine: `LOCALIDAD: ${contract.site.name} | OBRA/PROYECTO: ${contract.projectName?.trim() || 'No especificada'}`,
     equipmentCode: firstEquipment?.plateOrInternalCode ?? '-',
     equipmentBrandModel: [firstEquipment?.brand, firstEquipment?.model, firstEquipment?.year ? String(firstEquipment.year) : '']
       .filter(Boolean)
@@ -493,6 +497,23 @@ async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
   await workbook.xlsx.readFile(SERVICE_ORDER_TEMPLATE_PATH)
   const worksheet = workbook.getWorksheet('OC 26.07') ?? workbook.worksheets[0]
 
+  worksheet.pageSetup = {
+    ...worksheet.pageSetup,
+    orientation: 'portrait',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 1,
+  }
+  worksheet.getRow(18).height = 24
+  worksheet.getRow(19).height = 20
+  worksheet.getRow(20).height = 20
+  worksheet.getRow(22).height = 18
+  worksheet.getRow(23).height = 18
+  ;['G18', 'G19', 'G20', 'G22', 'G23', 'M14', 'C46', 'L49', 'G52'].forEach((address) => {
+    const cell = worksheet.getCell(address)
+    cell.alignment = { ...cell.alignment, wrapText: true, vertical: 'middle' }
+  })
+
   worksheet.getCell('E10').value = 'x'
   worksheet.getCell('E11').value = context.supplierName
   worksheet.getCell('K11').value = context.supplierRuc
@@ -506,7 +527,9 @@ async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
   worksheet.getCell('M14').value = `${context.siteName} - ${context.projectName}`
   worksheet.getCell('D18').value = context.quantity
   worksheet.getCell('F18').value = context.unit
-  worksheet.getCell('G18').value = context.description
+  worksheet.getCell('G18').value = context.serviceTitle
+  worksheet.getCell('G19').value = context.periodLine
+  worksheet.getCell('G20').value = context.locationLine
   worksheet.getCell('L18').value = context.unitPrice
   worksheet.getCell('M18').value = { formula: 'L18*D18', result: context.subtotal }
   worksheet.getCell('G22').value = `PLACA/CÓDIGO: ${context.equipmentCode}`
@@ -524,7 +547,37 @@ async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
   return Buffer.from(buffer)
 }
 
-async function buildServiceOrderPdfBuffer(context: ServiceOrderContext) {
+async function convertServiceOrderExcelToPdfBuffer(excelBuffer: Buffer) {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'isem-os-'))
+  const inputPath = path.join(tempDir, 'orden-servicio.xlsx')
+  const outputPath = path.join(tempDir, 'orden-servicio.pdf')
+  await fs.writeFile(inputPath, excelBuffer)
+
+  const commands = ['soffice', 'libreoffice']
+  let lastError: unknown
+  for (const command of commands) {
+    try {
+      await execFileAsync(command, ['--headless', '--convert-to', 'pdf', '--outdir', tempDir, inputPath], {
+        timeout: 60000,
+      })
+      const pdf = await fs.readFile(outputPath)
+      await fs.rm(tempDir, { recursive: true, force: true })
+      return pdf
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  await fs.rm(tempDir, { recursive: true, force: true })
+  throw new HttpError(
+    500,
+    'SERVICE_ORDER_PDF_CONVERTER_NOT_AVAILABLE',
+    'No se pudo exportar la orden de servicio a PDF porque el servidor no tiene LibreOffice/soffice instalado.',
+    { cause: lastError },
+  )
+}
+
+async function buildServiceOrderSummaryPdfBuffer(context: ServiceOrderContext) {
   const doc = new PDFDocument({ margin: 44, size: 'A4' })
   const chunks: Buffer[] = []
   doc.on('data', (chunk: Buffer) => chunks.push(Buffer.from(chunk)))
@@ -558,7 +611,7 @@ async function buildServiceOrderPdfBuffer(context: ServiceOrderContext) {
   const rows = [
     ['Cantidad', String(context.quantity)],
     ['Unidad', context.unit],
-    ['Descripción', context.description.replace(/\n/g, ' | ')],
+    ['Descripción', [context.serviceTitle, context.periodLine, context.locationLine].join(' | ')],
     ['Precio unitario', formatMoney(context.unitPrice, context.currency)],
     ['Subtotal', formatMoney(context.subtotal, context.currency)],
     ['IGV 18%', formatMoney(context.igv, context.currency)],
@@ -977,7 +1030,7 @@ export async function generateServiceOrder(id: string, userId?: string) {
 
   const context = buildServiceOrderContext(contract)
   const excelBuffer = await buildServiceOrderExcelBuffer(context)
-  const pdfBuffer = await buildServiceOrderPdfBuffer(context)
+  const pdfBuffer = await convertServiceOrderExcelToPdfBuffer(excelBuffer)
   const destinationFolder = path.join(contract.folderPath, 'orden-servicio')
   const generatedAt = new Date().toISOString().replace(/[:.]/g, '-')
   const baseName = normalizeFolderName(`orden-servicio-${contract.contractNumber}`)
