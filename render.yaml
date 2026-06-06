@@ -1,11 +1,10 @@
 services:
   - type: web
     name: alquileres-isem-api
-    runtime: node
-    rootDir: api
+    runtime: docker
+    dockerfilePath: api/Dockerfile
+    dockerContext: api
     plan: starter
-    buildCommand: npm install && npm run prisma:generate && npm run build && npm run prepare:prod
-    startCommand: npm run start:prod
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
