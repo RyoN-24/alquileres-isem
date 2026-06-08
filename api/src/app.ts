@@ -1,6 +1,4 @@
 import cors from 'cors'
-import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
 import express from 'express'
 import helmet from 'helmet'
 import morgan from 'morgan'
@@ -20,29 +18,7 @@ import { userRouter } from './users/user.routes'
 import { valuationRouter } from './valuations/valuation.routes'
 import { alertRouter } from './alerts/alert.routes'
 import { settingsRouter } from './settings/settings.routes'
-
-const execFileAsync = promisify(execFile)
-
-async function getPdfConverterHealth() {
-  for (const command of ['soffice', 'libreoffice']) {
-    try {
-      const { stdout } = await execFileAsync(command, ['--version'], { timeout: 3000 })
-      return {
-        available: true,
-        command,
-        version: stdout.trim(),
-      }
-    } catch {
-      // Try the next known LibreOffice binary name.
-    }
-  }
-
-  return {
-    available: false,
-    command: null,
-    version: null,
-  }
-}
+import { getPdfConverterHealth } from './pdf-converter'
 
 export function createApp() {
   const app = express()

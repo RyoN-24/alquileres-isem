@@ -14,6 +14,8 @@ RUN apt-get update \
     fonts-liberation \
   && rm -rf /var/lib/apt/lists/*
 
+RUN command -v soffice && soffice --version
+
 COPY api/package*.json ./
 RUN npm ci
 

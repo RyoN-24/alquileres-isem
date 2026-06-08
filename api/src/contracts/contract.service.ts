@@ -12,6 +12,7 @@ import { HttpError } from '../http/errors'
 import { getContractTemplate } from '../settings/settings.service'
 import { documentStorage } from '../storage/document-storage.service'
 import { normalizeFolderName } from '../storage/path-utils'
+import { pdfConverterCommands } from '../pdf-converter'
 import { createContractSchema, updateContractSchema } from './contract.schemas'
 
 type CreateContractInput = z.infer<typeof createContractSchema>
@@ -560,9 +561,8 @@ async function convertServiceOrderExcelToPdfBuffer(excelBuffer: Buffer) {
   const outputPath = path.join(tempDir, 'orden-servicio.pdf')
   await fs.writeFile(inputPath, excelBuffer)
 
-  const commands = ['soffice', 'libreoffice']
   let lastError: unknown
-  for (const command of commands) {
+  for (const command of pdfConverterCommands) {
     try {
       await execFileAsync(command, ['--headless', '--convert-to', 'pdf', '--outdir', tempDir, inputPath], {
         timeout: 60000,
