@@ -65,7 +65,11 @@ contractRouter.post(
   '/:id/generate-service-order',
   requireRole('ADMIN', 'OPERATIVO'),
   asyncHandler(async (req, res) => {
-    res.status(201).json(await generateServiceOrder(String(req.params.id), req.user?.id))
+    res.status(201).json(
+      await generateServiceOrder(String(req.params.id), req.user?.id, {
+        includePdf: req.query.format !== 'excel',
+      }),
+    )
   }),
 )
 

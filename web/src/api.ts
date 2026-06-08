@@ -377,6 +377,14 @@ export type ApiAttachment = {
   createdAt: string
 }
 
+export type GenerateServiceOrderResponse = {
+  data: ApiAttachment[]
+  warning?: {
+    code: string
+    message: string
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}) {
   assertApiUrl()
   const response = await fetch(`${API_URL}${path}`, {
@@ -570,8 +578,9 @@ export async function generateContractPdf(token: string, id: string) {
   })
 }
 
-export async function generateServiceOrder(token: string, id: string) {
-  return request<{ data: ApiAttachment[] }>(`/api/v1/contracts/${id}/generate-service-order`, {
+export async function generateServiceOrder(token: string, id: string, format: 'excel' | 'pdf' = 'pdf') {
+  const suffix = format === 'excel' ? '?format=excel' : ''
+  return request<GenerateServiceOrderResponse>(`/api/v1/contracts/${id}/generate-service-order${suffix}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   })

@@ -1021,7 +1021,11 @@ export async function generateContractPdf(id: string, userId?: string) {
   return attachment
 }
 
-export async function generateServiceOrder(id: string, userId?: string) {
+export async function generateServiceOrder(
+  id: string,
+  userId?: string,
+  options: { includePdf?: boolean } = {},
+) {
   const contract = await getContract(id)
 
   if (!contract.folderPath) {
@@ -1030,7 +1034,6 @@ export async function generateServiceOrder(id: string, userId?: string) {
 
   const context = buildServiceOrderContext(contract)
   const excelBuffer = await buildServiceOrderExcelBuffer(context)
-  const pdfBuffer = await convertServiceOrderExcelToPdfBuffer(excelBuffer)
   const destinationFolder = path.join(contract.folderPath, 'orden-servicio')
   const generatedAt = new Date().toISOString().replace(/[:.]/g, '-')
   const baseName = normalizeFolderName(`orden-servicio-${contract.contractNumber}`)
@@ -1054,38 +1057,61 @@ export async function generateServiceOrder(id: string, userId?: string) {
   })
 
   const excelFileName = `${baseName}-${generatedAt}.xlsx`
-  const pdfFileName = `${baseName}-${generatedAt}.pdf`
-  const [excelStoragePath, pdfStoragePath] = await Promise.all([
-    documentStorage.saveBuffer({
-      buffer: excelBuffer,
-      destinationFolder,
+  const excelStoragePath = await documentStorage.saveBuffer({
+    buffer: excelBuffer,
+    destinationFolder,
+    fileName: excelFileName,
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+
+  const excelAttachment = await prisma.attachment.create({
+    data: {
+      entityType: 'CONTRACT',
+      entityId: contract.id,
+      supplierId: contract.supplierId,
       fileName: excelFileName,
-      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    }),
-    documentStorage.saveBuffer({
+      fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      fileSizeBytes: excelBuffer.byteLength,
+      storagePath: excelStoragePath,
+      category: 'ORDEN_SERVICIO_GENERADA',
+      version: 1,
+      uploadedById: userId,
+    },
+  })
+
+  let pdfAttachment = null
+  let warning: { code: string; message: string } | undefined
+
+  if (options.includePdf === false) {
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        entityType: 'CONTRACT',
+        entityId: contract.id,
+        action: 'GENERATE_SERVICE_ORDER',
+        metadata: {
+          orderNumber: context.orderNumber,
+          excelFileName,
+          excelStoragePath,
+          format: 'excel',
+        },
+      },
+    })
+
+    return { data: [excelAttachment] }
+  }
+
+  try {
+    const pdfBuffer = await convertServiceOrderExcelToPdfBuffer(excelBuffer)
+    const pdfFileName = `${baseName}-${generatedAt}.pdf`
+    const pdfStoragePath = await documentStorage.saveBuffer({
       buffer: pdfBuffer,
       destinationFolder,
       fileName: pdfFileName,
       mimeType: 'application/pdf',
-    }),
-  ])
+    })
 
-  const [excelAttachment, pdfAttachment] = await prisma.$transaction([
-    prisma.attachment.create({
-      data: {
-        entityType: 'CONTRACT',
-        entityId: contract.id,
-        supplierId: contract.supplierId,
-        fileName: excelFileName,
-        fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        fileSizeBytes: excelBuffer.byteLength,
-        storagePath: excelStoragePath,
-        category: 'ORDEN_SERVICIO_GENERADA',
-        version: 1,
-        uploadedById: userId,
-      },
-    }),
-    prisma.attachment.create({
+    pdfAttachment = await prisma.attachment.create({
       data: {
         entityType: 'CONTRACT',
         entityId: contract.id,
@@ -1098,8 +1124,9 @@ export async function generateServiceOrder(id: string, userId?: string) {
         version: 1,
         uploadedById: userId,
       },
-    }),
-    prisma.auditLog.create({
+    })
+
+    await prisma.auditLog.create({
       data: {
         userId,
         entityType: 'CONTRACT',
@@ -1113,10 +1140,34 @@ export async function generateServiceOrder(id: string, userId?: string) {
           pdfStoragePath,
         },
       },
-    }),
-  ])
+    })
+  } catch (error) {
+    if (!(error instanceof HttpError) || error.code !== 'SERVICE_ORDER_PDF_CONVERTER_NOT_AVAILABLE') {
+      throw error
+    }
 
-  return { data: [excelAttachment, pdfAttachment] }
+    warning = {
+      code: error.code,
+      message: 'Se genero el Excel de la orden de servicio, pero no se pudo exportar a PDF porque el servidor no tiene LibreOffice/soffice instalado.',
+    }
+
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        entityType: 'CONTRACT',
+        entityId: contract.id,
+        action: 'GENERATE_SERVICE_ORDER',
+        metadata: {
+          orderNumber: context.orderNumber,
+          excelFileName,
+          excelStoragePath,
+          warning,
+        },
+      },
+    })
+  }
+
+  return { data: [excelAttachment, ...(pdfAttachment ? [pdfAttachment] : [])], warning }
 }
 
 export async function deleteContract(id: string, userId?: string) {

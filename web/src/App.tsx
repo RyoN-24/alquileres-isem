@@ -735,11 +735,14 @@ function App() {
     setDetailAttachments(result.data)
   }
 
-  const handleGenerateServiceOrder = async (contract: ApiContract) => {
+  const handleGenerateServiceOrder = async (contract: ApiContract, format: 'excel' | 'pdf' = 'pdf') => {
     if (!token) return
-    await generateServiceOrder(token, contract.id)
+    const serviceOrderResult = await generateServiceOrder(token, contract.id, format)
     const result = await listAttachments(token, { entityType: 'CONTRACT', entityId: contract.id })
     setDetailAttachments(result.data)
+    if (serviceOrderResult.warning) {
+      throw new Error(serviceOrderResult.warning.message)
+    }
   }
 
   const handleDownloadImportTemplate = async () => {
@@ -3782,7 +3785,7 @@ function ContractDetail({
   }) => Promise<void>
   onDownloadAttachment: (attachment: ApiAttachment) => Promise<void>
   onGeneratePdf: (contract: ApiContract) => Promise<void>
-  onGenerateServiceOrder: (contract: ApiContract) => Promise<void>
+  onGenerateServiceOrder: (contract: ApiContract, format?: 'excel' | 'pdf') => Promise<void>
   onDelete?: () => void
   onClose: () => void
 }) {
@@ -3889,15 +3892,33 @@ function ContractDetail({
                 setIsGeneratingServiceOrder(true)
                 setGeneratePdfError('')
                 try {
-                  await onGenerateServiceOrder(contract)
+                  await onGenerateServiceOrder(contract, 'excel')
                 } catch (error) {
-                  setGeneratePdfError(error instanceof Error ? error.message : 'No se pudo generar la orden de servicio')
+                  setGeneratePdfError(error instanceof Error ? error.message : 'No se pudo generar el Excel de la orden de servicio')
                 } finally {
                   setIsGeneratingServiceOrder(false)
                 }
               }}
             >
-              {isGeneratingServiceOrder ? 'Generando OS...' : 'Generar OS'}
+              {isGeneratingServiceOrder ? 'Generando OS...' : 'Generar OS Excel'}
+            </button>
+            <button
+              type="button"
+              className="primary-button"
+              disabled={isGeneratingServiceOrder}
+              onClick={async () => {
+                setIsGeneratingServiceOrder(true)
+                setGeneratePdfError('')
+                try {
+                  await onGenerateServiceOrder(contract, 'pdf')
+                } catch (error) {
+                  setGeneratePdfError(error instanceof Error ? error.message : 'No se pudo generar el PDF de la orden de servicio')
+                } finally {
+                  setIsGeneratingServiceOrder(false)
+                }
+              }}
+            >
+              {isGeneratingServiceOrder ? 'Generando OS...' : 'Generar OS PDF'}
             </button>
           </div>
         </div>
