@@ -133,6 +133,7 @@ type ContractPdfContext = {
   supplierRuc: string
   siteName: string
   projectName: string
+  costCenter: string
   startDate: string
   endDate: string
   billingMode: string
@@ -378,6 +379,7 @@ async function buildPdfBuffer(context: ContractPdfContext, body: string) {
   drawKeyValueGrid(doc, [
     { label: 'Localidad', value: context.siteName },
     { label: 'Obra / proyecto', value: context.projectName },
+    { label: 'Centro de costos', value: context.costCenter },
     { label: 'Vigencia', value: `${context.startDate} al ${context.endDate}` },
     { label: 'Modalidad', value: `Por ${context.billingMode}` },
     { label: 'Tarifa base', value: context.rate },
@@ -426,6 +428,7 @@ type ServiceOrderContext = {
   contractNumber: string
   siteName: string
   projectName: string
+  costCenter: string
   quoteNumber: string
   quoteDate: string
   issueDate: string
@@ -442,7 +445,8 @@ type ServiceOrderContext = {
   total: number
   currency: 'PEN' | 'USD'
   paymentTerms: string
-  bankAccount: string
+  bankName: string
+  bankAccountNumber: string
   totalInWords: string
 }
 
@@ -469,6 +473,7 @@ function buildServiceOrderContext(contract: Awaited<ReturnType<typeof getContrac
     contractNumber: contract.contractNumber,
     siteName: contract.site.name,
     projectName: contract.projectName?.trim() || 'No especificada',
+    costCenter: contract.costCenter?.trim() || 'No especificado',
     quoteNumber: contract.contractNumber,
     quoteDate: formatShortDate(contract.startDate),
     issueDate: formatShortDate(new Date()),
@@ -487,7 +492,8 @@ function buildServiceOrderContext(contract: Awaited<ReturnType<typeof getContrac
     total,
     currency: contract.currency,
     paymentTerms: `A ${contract.invoiceDueDays} DÍAS`,
-    bankAccount: [contract.supplier.bankName, contract.supplier.bankAccountNumber].filter(Boolean).join(': '),
+    bankName: contract.supplier.bankName?.trim() || '-',
+    bankAccountNumber: contract.supplier.bankAccountNumber?.trim() || '-',
     totalInWords: amountToWords(total, contract.currency),
   }
 }
@@ -509,7 +515,7 @@ async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
   worksheet.getRow(20).height = 20
   worksheet.getRow(22).height = 18
   worksheet.getRow(23).height = 18
-  ;['G18', 'G19', 'G20', 'G22', 'G23', 'M14', 'C46', 'L49', 'G52'].forEach((address) => {
+  ;['G18', 'G19', 'G20', 'G22', 'G23', 'M14', 'C46', 'L49', 'L50', 'G52'].forEach((address) => {
     const cell = worksheet.getCell(address)
     cell.alignment = { ...cell.alignment, wrapText: true, vertical: 'middle' }
   })
@@ -524,7 +530,7 @@ async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
   worksheet.getCell('K13').value = context.supplierEmail
   worksheet.getCell('M13').value = context.quoteDate
   worksheet.getCell('E14').value = context.supplierContact
-  worksheet.getCell('M14').value = `${context.siteName} - ${context.projectName}`
+  worksheet.getCell('M14').value = context.costCenter
   worksheet.getCell('D18').value = context.quantity
   worksheet.getCell('F18').value = context.unit
   worksheet.getCell('G18').value = context.serviceTitle
@@ -539,7 +545,8 @@ async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
   worksheet.getCell('M47').value = { formula: 'M46*0.18', result: context.igv }
   worksheet.getCell('M48').value = { formula: 'M46+M47', result: context.total }
   worksheet.getCell('G49').value = context.paymentTerms
-  worksheet.getCell('L49').value = context.bankAccount || '-'
+  worksheet.getCell('L49').value = context.bankName
+  worksheet.getCell('L50').value = context.bankAccountNumber
   worksheet.getCell('G52').value = `${context.siteName} - ${context.projectName}`
   worksheet.getCell('G55').value = context.currency === 'USD' ? 'Moneda dólares' : 'Moneda soles'
 
@@ -601,6 +608,7 @@ async function buildServiceOrderSummaryPdfBuffer(context: ServiceOrderContext) {
     { label: 'Contrato', value: context.contractNumber },
     { label: 'Localidad', value: context.siteName },
     { label: 'Obra / proyecto', value: context.projectName },
+    { label: 'Centro de costos', value: context.costCenter },
     { label: 'Fecha de emisión', value: context.issueDate },
   ], 2)
 
@@ -629,7 +637,8 @@ async function buildServiceOrderSummaryPdfBuffer(context: ServiceOrderContext) {
   doc.font('Helvetica-Bold').fontSize(9).fillColor('#142033').text(context.totalInWords)
   doc.moveDown()
   doc.font('Helvetica').fontSize(8).fillColor('#26384c').text(`Forma de pago: ${context.paymentTerms}`)
-  doc.text(`Cuenta: ${context.bankAccount || '-'}`)
+  doc.text(`Banco: ${context.bankName}`)
+  doc.text(`Cuenta: ${context.bankAccountNumber}`)
 
   doc.end()
   await new Promise<void>((resolve) => doc.on('end', resolve))
@@ -694,6 +703,7 @@ export async function listContracts(params: {
     OR: params.q
       ? [
           { contractNumber: { contains: params.q } },
+          { costCenter: { contains: params.q } },
           { supplier: { businessName: { contains: params.q } } },
         ]
       : undefined,
@@ -770,6 +780,7 @@ export async function createContract(input: CreateContractInput, userId?: string
       siteId: input.siteId,
       contractNumber: input.contractNumber,
       projectName: input.projectName,
+      costCenter: input.costCenter,
       startDate: parseDate(input.startDate),
       endDate: parseDate(input.endDate),
       billingMode: input.billingMode,
@@ -841,6 +852,7 @@ export async function updateContract(id: string, input: UpdateContractInput, use
         siteId: input.siteId,
         contractNumber: input.contractNumber,
         projectName: input.projectName,
+        costCenter: input.costCenter,
         startDate: input.startDate ? parseDate(input.startDate) : undefined,
         endDate: input.endDate ? parseDate(input.endDate) : undefined,
         billingMode: input.billingMode,
@@ -925,6 +937,7 @@ export async function generateContractPdf(id: string, userId?: string) {
   const billingMode = billingModeLabel(contract.billingMode)
   const rate = formatMoney(contract.rate, contract.currency)
   const projectName = contract.projectName?.trim() || 'No especificada'
+  const costCenter = contract.costCenter?.trim() || 'No especificado'
 
   const rendered = renderTemplate(template, {
     contractNumber: contract.contractNumber,
@@ -934,6 +947,7 @@ export async function generateContractPdf(id: string, userId?: string) {
     supplierRuc: contract.supplier.ruc,
     siteName: contract.site.name,
     projectName,
+    costCenter,
     startDate,
     endDate,
     billingMode,
@@ -955,6 +969,7 @@ export async function generateContractPdf(id: string, userId?: string) {
       supplierRuc: contract.supplier.ruc,
       siteName: contract.site.name,
       projectName,
+      costCenter,
       startDate,
       endDate,
       billingMode,

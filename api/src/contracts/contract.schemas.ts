@@ -5,6 +5,7 @@ export const createContractSchema = z.object({
   siteId: z.string(),
   contractNumber: z.string().min(2),
   projectName: z.string().trim().max(160).optional(),
+  costCenter: z.string().trim().max(120).optional(),
   equipmentIds: z.array(z.string().uuid()).min(1),
   startDate: z.string().date(),
   endDate: z.string().date(),

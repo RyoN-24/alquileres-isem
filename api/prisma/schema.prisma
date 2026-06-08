@@ -179,6 +179,7 @@ model Contract {
   siteId             String
   contractNumber     String              @unique
   projectName        String?
+  costCenter         String?
   startDate          DateTime
   endDate            DateTime
   billingMode        BillingMode

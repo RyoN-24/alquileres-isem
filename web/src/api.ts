@@ -93,6 +93,8 @@ export type CreateSupplierInput = {
   defaultPaymentTermDays: number
 }
 
+export type UpdateSupplierInput = Partial<CreateSupplierInput>
+
 export type ApiEquipment = {
   id: string
   supplierId: string
@@ -141,6 +143,7 @@ export type ApiContract = {
   siteId: string
   contractNumber: string
   projectName: string | null
+  costCenter: string | null
   startDate: string
   endDate: string
   billingMode: 'HORA' | 'DIA'
@@ -162,6 +165,7 @@ export type CreateContractInput = {
   siteId: string
   contractNumber: string
   projectName?: string
+  costCenter?: string
   equipmentIds: string[]
   startDate: string
   endDate: string
@@ -486,6 +490,14 @@ export async function listSuppliers(token: string) {
 export async function createSupplier(token: string, input: CreateSupplierInput) {
   return request<ApiSupplier>('/api/v1/suppliers', {
     method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(input),
+  })
+}
+
+export async function updateSupplier(token: string, id: string, input: UpdateSupplierInput) {
+  return request<ApiSupplier>(`/api/v1/suppliers/${id}`, {
+    method: 'PATCH',
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(input),
   })

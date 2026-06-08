@@ -70,6 +70,7 @@ import {
   updateAlertSettings,
   updateContractTemplate,
   updateSite,
+  updateSupplier,
   updateUser,
   uploadAttachment,
   deleteContract,
@@ -101,6 +102,7 @@ import type {
   CreateInvoiceInput,
   CreateValuationInput,
   CreateSupplierInput,
+  UpdateSupplierInput,
   CreateUserInput,
   MarkInvoicePaidInput,
   UpdateInvoiceInput,
@@ -579,6 +581,12 @@ function App() {
     await createContract(token, input)
     await loadContracts(token)
     setContractFormOpen(false)
+  }
+
+  const handleUpdateSupplier = async (id: string, input: UpdateSupplierInput) => {
+    if (!token) return
+    await updateSupplier(token, id, input)
+    await loadSuppliers(token)
   }
 
   const handleCreateValuation = async (input: CreateValuationInput) => {
@@ -1102,6 +1110,7 @@ function App() {
           contracts={apiContracts}
           valuations={apiValuations}
           invoices={apiInvoices}
+          onUpdate={handleUpdateSupplier}
           onDelete={() => handleDeleteSupplier(selectedSupplierId)}
           onClose={() => setSelectedSupplierId(null)}
         />
@@ -2374,6 +2383,7 @@ function SupplierDetail({
   contracts,
   valuations,
   invoices,
+  onUpdate,
   onClose,
   onDelete,
 }: {
@@ -2383,11 +2393,38 @@ function SupplierDetail({
   contracts: ApiContract[]
   valuations: ApiValuation[]
   invoices: ApiInvoice[]
+  onUpdate: (id: string, input: UpdateSupplierInput) => Promise<void>
   onClose: () => void
   onDelete?: () => void
 }) {
+  const [editError, setEditError] = useState('')
+  const [editNotice, setEditNotice] = useState('')
+  const [isSavingSupplier, setIsSavingSupplier] = useState(false)
   const supplier = suppliers.find((item) => item.id === supplierId)
   if (!supplier) return null
+
+  const handleSupplierUpdate = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    setIsSavingSupplier(true)
+    setEditError('')
+    setEditNotice('')
+    try {
+      await onUpdate(supplier.id, {
+        contactName: String(formData.get('contactName') ?? ''),
+        phone: String(formData.get('phone') ?? ''),
+        email: String(formData.get('email') ?? ''),
+        bankName: String(formData.get('bankName') ?? ''),
+        bankAccountNumber: String(formData.get('bankAccountNumber') ?? ''),
+        defaultPaymentTermDays: Number(formData.get('defaultPaymentTermDays') ?? supplier.defaultPaymentTermDays),
+      })
+      setEditNotice('Datos del proveedor actualizados.')
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : 'No se pudo actualizar proveedor')
+    } finally {
+      setIsSavingSupplier(false)
+    }
+  }
 
   const supplierEquipment = equipment.filter((item) => item.supplierId === supplier.id)
   const supplierContracts = contracts.filter((item) => item.supplierId === supplier.id)
@@ -2454,6 +2491,47 @@ function SupplierDetail({
         </div>
 
         <div className="plain-sections">
+          <section>
+            <h3>Datos de pago y contacto</h3>
+            <form className="quick-form compact-form" onSubmit={handleSupplierUpdate}>
+              <label>
+                Contacto
+                <input name="contactName" defaultValue={supplier.contactName ?? ''} />
+              </label>
+              <label>
+                Telefono
+                <input name="phone" defaultValue={supplier.phone ?? ''} />
+              </label>
+              <label>
+                Correo
+                <input name="email" type="email" defaultValue={supplier.email ?? ''} />
+              </label>
+              <label>
+                Banco
+                <input name="bankName" defaultValue={supplier.bankName ?? ''} placeholder="Ej. BCP SOLES" />
+              </label>
+              <label>
+                Numero de cuenta
+                <input name="bankAccountNumber" defaultValue={supplier.bankAccountNumber ?? ''} />
+              </label>
+              <label>
+                Plazo pago
+                <input
+                  name="defaultPaymentTermDays"
+                  type="number"
+                  min="1"
+                  defaultValue={supplier.defaultPaymentTermDays}
+                />
+              </label>
+              {editError && <div className="inline-alert wide-field">{editError}</div>}
+              {editNotice && <div className="inline-alert success wide-field">{editNotice}</div>}
+              <div className="form-actions wide-field">
+                <button type="submit" className="primary-button" disabled={isSavingSupplier}>
+                  {isSavingSupplier ? 'Guardando...' : 'Guardar datos'}
+                </button>
+              </div>
+            </form>
+          </section>
           <section>
             <h3>Equipos</h3>
             <div className="detail-list">
@@ -2887,6 +2965,7 @@ function ContractForm({
       siteId: String(formData.get('siteId') ?? ''),
       contractNumber: String(formData.get('contractNumber') ?? ''),
       projectName: String(formData.get('projectName') ?? ''),
+      costCenter: String(formData.get('costCenter') ?? ''),
       equipmentIds,
       startDate: String(formData.get('startDate') ?? ''),
       endDate: String(formData.get('endDate') ?? ''),
@@ -2951,6 +3030,10 @@ function ContractForm({
           <label>
             Nombre de obra/proyecto
             <input name="projectName" placeholder="Ej. Mantenimiento planta concentradora" />
+          </label>
+          <label>
+            Centro de costos
+            <input name="costCenter" placeholder="Ej. OFICINA TACNA" />
           </label>
           <label>
             Numero
@@ -3821,6 +3904,7 @@ function ContractDetail({
             <p>
               {contract.supplier.businessName} - {contract.site.name}
               {contract.projectName ? ` - ${contract.projectName}` : ''}
+              {contract.costCenter ? ` - CC: ${contract.costCenter}` : ''}
             </p>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -4789,7 +4873,7 @@ function SettingsView({
             />
           </label>
           <p className="helper-text">
-            Variables disponibles: {'{{contractNumber}}'}, {'{{supplierName}}'}, {'{{supplierRuc}}'}, {'{{siteName}}'}, {'{{projectName}}'}, {'{{equipmentList}}'}, {'{{startDate}}'}, {'{{endDate}}'}, {'{{billingMode}}'}, {'{{rate}}'}, {'{{currency}}'}, {'{{invoiceDueDays}}'}, {'{{notes}}'}.
+            Variables disponibles: {'{{contractNumber}}'}, {'{{supplierName}}'}, {'{{supplierRuc}}'}, {'{{siteName}}'}, {'{{projectName}}'}, {'{{costCenter}}'}, {'{{equipmentList}}'}, {'{{startDate}}'}, {'{{endDate}}'}, {'{{billingMode}}'}, {'{{rate}}'}, {'{{currency}}'}, {'{{invoiceDueDays}}'}, {'{{notes}}'}.
           </p>
           <button type="submit" className="primary-button" disabled={isSubmittingTemplate}>
             {isSubmittingTemplate ? 'Guardando...' : 'Guardar plantilla'}
