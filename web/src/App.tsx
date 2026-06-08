@@ -741,7 +741,7 @@ function App() {
     const result = await listAttachments(token, { entityType: 'CONTRACT', entityId: contract.id })
     setDetailAttachments(result.data)
     if (serviceOrderResult.warning) {
-      throw new Error(serviceOrderResult.warning.message)
+      return serviceOrderResult.warning.message
     }
   }
 
@@ -3785,13 +3785,14 @@ function ContractDetail({
   }) => Promise<void>
   onDownloadAttachment: (attachment: ApiAttachment) => Promise<void>
   onGeneratePdf: (contract: ApiContract) => Promise<void>
-  onGenerateServiceOrder: (contract: ApiContract, format?: 'excel' | 'pdf') => Promise<void>
+  onGenerateServiceOrder: (contract: ApiContract, format?: 'excel' | 'pdf') => Promise<string | void>
   onDelete?: () => void
   onClose: () => void
 }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const [isGeneratingServiceOrder, setIsGeneratingServiceOrder] = useState(false)
   const [generatePdfError, setGeneratePdfError] = useState('')
+  const [generatePdfNotice, setGeneratePdfNotice] = useState('')
   const contractValuations = valuations.filter((valuation) => valuation.contractId === contract.id)
   const contractInvoices = invoices.filter((invoice) => invoice.contractId === contract.id)
   const hasSignedContract = attachments.some((attachment) => attachment.category === 'CONTRATO_FIRMADO')
@@ -3873,8 +3874,10 @@ function ContractDetail({
               onClick={async () => {
                 setIsGeneratingPdf(true)
                 setGeneratePdfError('')
+                setGeneratePdfNotice('')
                 try {
                   await onGeneratePdf(contract)
+                  setGeneratePdfNotice('PDF de contrato generado correctamente.')
                 } catch (error) {
                   setGeneratePdfError(error instanceof Error ? error.message : 'No se pudo generar el PDF')
                 } finally {
@@ -3891,8 +3894,10 @@ function ContractDetail({
               onClick={async () => {
                 setIsGeneratingServiceOrder(true)
                 setGeneratePdfError('')
+                setGeneratePdfNotice('')
                 try {
                   await onGenerateServiceOrder(contract, 'excel')
+                  setGeneratePdfNotice('Excel de la orden de servicio generado correctamente. Puede descargarlo en adjuntos.')
                 } catch (error) {
                   setGeneratePdfError(error instanceof Error ? error.message : 'No se pudo generar el Excel de la orden de servicio')
                 } finally {
@@ -3909,8 +3914,13 @@ function ContractDetail({
               onClick={async () => {
                 setIsGeneratingServiceOrder(true)
                 setGeneratePdfError('')
+                setGeneratePdfNotice('')
                 try {
-                  await onGenerateServiceOrder(contract, 'pdf')
+                  const warning = await onGenerateServiceOrder(contract, 'pdf')
+                  setGeneratePdfNotice(
+                    warning ??
+                      'Orden de servicio generada correctamente. Puede descargar el Excel y PDF en adjuntos.',
+                  )
                 } catch (error) {
                   setGeneratePdfError(error instanceof Error ? error.message : 'No se pudo generar el PDF de la orden de servicio')
                 } finally {
@@ -3923,6 +3933,7 @@ function ContractDetail({
           </div>
         </div>
         {generatePdfError && <div className="inline-alert">{generatePdfError}</div>}
+        {generatePdfNotice && <div className="inline-alert warning">{generatePdfNotice}</div>}
 
         <div className="plain-sections">
           <section>

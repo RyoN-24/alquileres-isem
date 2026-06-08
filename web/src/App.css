@@ -586,6 +586,13 @@ body.dark-theme .content::after {
   color: var(--success);
 }
 
+.inline-alert.warning {
+  border-color: rgba(245, 158, 11, 0.22);
+  border-left-color: var(--warning);
+  background: rgba(245, 158, 11, 0.1);
+  color: #92400e;
+}
+
 .section-heading {
   display: flex;
   align-items: flex-start;
