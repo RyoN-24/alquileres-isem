@@ -10,7 +10,37 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U isem -d alquileres_isem"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: alquileres-isem-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      APP_URL: http://127.0.0.1:5174
+      APP_URLS: http://localhost:5174,http://127.0.0.1:5174,http://localhost:5173,http://127.0.0.1:5173
+      DATABASE_URL: postgresql://isem:isem_dev_password@postgres:5432/alquileres_isem
+      JWT_SECRET: isem-local-docker-secret-2026
+      JWT_EXPIRES_IN: 8h
+      FILE_STORAGE_MODE: LOCAL_VISIBLE
+      LOCAL_STORAGE_ROOT: /app/ISEM_ARCHIVOS
+      ALERT_DAYS_BEFORE_DUE: 3
+      CONTRACT_ALERT_DAYS_BEFORE_DUE: 3
+    ports:
+      - "4000:4000"
+    volumes:
+      - isem_files:/app/ISEM_ARCHIVOS
 
 volumes:
   postgres_data:
-
+  isem_files:
