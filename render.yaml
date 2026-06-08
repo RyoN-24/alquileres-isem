@@ -3,7 +3,7 @@ services:
     name: alquileres-isem-api
     runtime: docker
     dockerfilePath: api/Dockerfile
-    dockerContext: api
+    dockerContext: .
     plan: starter
     healthCheckPath: /health
     envVars:

@@ -14,12 +14,12 @@ RUN apt-get update \
     fonts-liberation \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
+COPY api/package*.json ./
 RUN npm ci
 
-COPY tsconfig.json ./
-COPY prisma ./prisma
-COPY src ./src
+COPY api/tsconfig.json ./
+COPY api/prisma ./prisma
+COPY api/src ./src
 
 RUN npm run prisma:generate && npm run build
 

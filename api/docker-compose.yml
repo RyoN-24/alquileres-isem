@@ -18,8 +18,8 @@ services:
 
   api:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: api/Dockerfile
     container_name: alquileres-isem-api
     depends_on:
       postgres:
