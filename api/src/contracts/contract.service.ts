@@ -42,11 +42,11 @@ function formatShortDate(value: Date) {
   return value.toISOString().slice(0, 10)
 }
 
-function serviceOrderDays(startDate: Date, endDate: Date) {
+export function serviceOrderDays(startDate: Date, endDate: Date) {
   const msPerDay = 24 * 60 * 60 * 1000
   const start = Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate())
   const end = Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate())
-  return Math.max(1, Math.floor((end - start) / msPerDay))
+  return Math.max(1, Math.floor((end - start) / msPerDay) + 1)
 }
 
 function supplierShortName(value: string) {
