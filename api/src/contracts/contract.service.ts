@@ -188,32 +188,156 @@ function drawSectionTitle(doc: PDFKit.PDFDocument, title: string) {
 function drawKeyValueGrid(doc: PDFKit.PDFDocument, items: Array<{ label: string; value: string }>, columns = 2) {
   const startX = doc.page.margins.left
   const pageWidth = pdfContentWidth(doc)
-  const gap = 10
+  const gap = 0
   const width = (pageWidth - gap * (columns - 1)) / columns
-  const rowHeight = 44
+  const rowHeight = 28
 
   for (let index = 0; index < items.length; index += columns) {
-    ensurePdfSpace(doc, rowHeight + 8)
+    ensurePdfSpace(doc, rowHeight + 2)
     const rowY = doc.y
 
     items.slice(index, index + columns).forEach((item, columnIndex) => {
       const x = startX + columnIndex * (width + gap)
-      doc.roundedRect(x, rowY, width, rowHeight, 6).fillAndStroke('#f7fafc', '#d9e2ea')
+      doc.rect(x, rowY, width, rowHeight).fillAndStroke('#ffffff', '#cbd5e1')
       doc
         .font('Helvetica-Bold')
-        .fontSize(7.5)
-        .fillColor('#53667a')
-        .text(item.label.toUpperCase(), x + 10, rowY + 9, { width: width - 20 })
+        .fontSize(7)
+        .fillColor('#374151')
+        .text(item.label.toUpperCase(), x + 6, rowY + 5, { width: width - 12 })
       doc
-        .font('Helvetica-Bold')
-        .fontSize(10)
-        .fillColor('#142033')
-        .text(item.value || '-', x + 10, rowY + 23, { width: width - 20 })
+        .font('Helvetica')
+        .fontSize(8.2)
+        .fillColor('#111827')
+        .text(item.value || '-', x + 6, rowY + 16, { width: width - 12, height: 10, ellipsis: true })
     })
 
-    doc.y = rowY + rowHeight + 8
+    doc.y = rowY + rowHeight
     resetPdfCursor(doc)
   }
+  doc.moveDown(0.35)
+  resetPdfCursor(doc)
+}
+
+function drawContractHeader(doc: PDFKit.PDFDocument, context: ContractPdfContext) {
+  const width = pdfContentWidth(doc)
+  const left = doc.page.margins.left
+  const top = 34
+
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(10)
+    .fillColor('#111827')
+    .text(context.companyName, left, top, { width: width - 148, align: 'left' })
+  doc.font('Helvetica').fontSize(8).fillColor('#374151').text(`RUC ${context.companyRuc}`, left, top + 15)
+
+  doc.rect(doc.page.width - doc.page.margins.right - 128, top, 128, 42).strokeColor('#111827').lineWidth(0.8).stroke()
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(7.5)
+    .fillColor('#374151')
+    .text('NRO. CONTRATO', doc.page.width - doc.page.margins.right - 122, top + 8, { width: 116, align: 'center' })
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(10)
+    .fillColor('#111827')
+    .text(context.contractNumber, doc.page.width - doc.page.margins.right - 122, top + 23, { width: 116, align: 'center' })
+
+  doc
+    .moveTo(left, top + 58)
+    .lineTo(left + width, top + 58)
+    .strokeColor('#111827')
+    .lineWidth(0.8)
+    .stroke()
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(13)
+    .fillColor('#111827')
+    .text(context.title.toUpperCase(), left, top + 68, { width, align: 'center' })
+  doc
+    .font('Helvetica')
+    .fontSize(8)
+    .fillColor('#4b5563')
+    .text(`Fecha de emisión: ${context.issueDate}`, left, top + 88, { width, align: 'center' })
+
+  doc.y = top + 112
+  resetPdfCursor(doc)
+}
+
+function drawLegalSectionTitle(doc: PDFKit.PDFDocument, title: string) {
+  ensurePdfSpace(doc, 24)
+  resetPdfCursor(doc)
+  doc.moveDown(0.35)
+  const y = doc.y
+  doc.font('Helvetica-Bold').fontSize(8.6).fillColor('#111827').text(title.toUpperCase(), doc.page.margins.left, y, {
+    width: pdfContentWidth(doc),
+  })
+  doc
+    .moveTo(doc.page.margins.left, doc.y + 3)
+    .lineTo(doc.page.width - doc.page.margins.right, doc.y + 3)
+    .strokeColor('#9ca3af')
+    .lineWidth(0.6)
+    .stroke()
+  doc.moveDown(0.45)
+  resetPdfCursor(doc)
+}
+
+function drawLegalPairTable(doc: PDFKit.PDFDocument, rows: Array<[string, string, string?, string?]>) {
+  const left = doc.page.margins.left
+  const width = pdfContentWidth(doc)
+  const widths = [92, 166, 104, width - 362]
+  const rowHeight = 24
+
+  rows.forEach((row) => {
+    ensurePdfSpace(doc, rowHeight + 2)
+    const y = doc.y
+    let x = left
+    const cells = [row[0], row[1], row[2] ?? '', row[3] ?? '']
+    cells.forEach((cell, index) => {
+      doc.rect(x, y, widths[index], rowHeight).strokeColor('#cbd5e1').lineWidth(0.5).stroke()
+      doc
+        .font(index % 2 === 0 ? 'Helvetica-Bold' : 'Helvetica')
+        .fontSize(index % 2 === 0 ? 7.2 : 8.2)
+        .fillColor(index % 2 === 0 ? '#374151' : '#111827')
+        .text(cell || '-', x + 5, y + 7, { width: widths[index] - 10, height: rowHeight - 8, ellipsis: true })
+      x += widths[index]
+    })
+    doc.y = y + rowHeight
+    resetPdfCursor(doc)
+  })
+  doc.moveDown(0.4)
+  resetPdfCursor(doc)
+}
+
+function getContractIntro(body: string) {
+  const lines = body
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  const intro: string[] = []
+  for (const line of lines) {
+    if (/^(PRIMERA|SEGUNDA|TERCERA|CUARTA|QUINTA|SEXTA|S[Ã‰E]PTIMA|OCTAVA|NOVENA|D[Ã‰E]CIMA|D[Ã‰E]CIMA\s+PRIMERA):/i.test(line)) {
+      break
+    }
+    if (/^CONTRATO DE/i.test(line)) continue
+    intro.push(line)
+  }
+
+  return intro.join('\n')
+}
+
+function drawContractIntro(doc: PDFKit.PDFDocument, body: string) {
+  const intro = getContractIntro(body)
+  if (!intro) return
+
+  ensurePdfSpace(doc, 70)
+  doc.font('Helvetica').fontSize(8.6).fillColor('#1f2937').text(intro, doc.page.margins.left, doc.y, {
+    width: pdfContentWidth(doc),
+    align: 'justify',
+    lineGap: 2,
+  })
+  doc.moveDown(0.55)
+  resetPdfCursor(doc)
 }
 
 function drawEquipmentTable(doc: PDFKit.PDFDocument, equipment: ContractPdfEquipment[]) {
@@ -285,25 +409,25 @@ function getClauseBlocks(body: string) {
 function drawClauses(doc: PDFKit.PDFDocument, body: string) {
   const clauses = getClauseBlocks(body)
   for (const clause of clauses) {
-    ensurePdfSpace(doc, 70)
+    ensurePdfSpace(doc, 48)
     resetPdfCursor(doc)
     doc
       .font('Helvetica-Bold')
-      .fontSize(9.2)
-      .fillColor('#0f2742')
+      .fontSize(8.4)
+      .fillColor('#111827')
       .text(clause.title, doc.page.margins.left, doc.y, { width: pdfContentWidth(doc) })
-    doc.moveDown(0.25)
+    doc.moveDown(0.18)
     resetPdfCursor(doc)
     doc
       .font('Helvetica')
-      .fontSize(8.8)
-      .fillColor('#26384c')
+      .fontSize(8.3)
+      .fillColor('#1f2937')
       .text(clause.text.join('\n'), doc.page.margins.left, doc.y, {
         width: pdfContentWidth(doc),
         align: 'justify',
-        lineGap: 3,
+        lineGap: 1.7,
       })
-    doc.moveDown(0.7)
+    doc.moveDown(0.42)
     resetPdfCursor(doc)
   }
 }
@@ -338,43 +462,16 @@ function drawSignatures(doc: PDFKit.PDFDocument, context: ContractPdfContext) {
 }
 
 async function buildPdfBuffer(context: ContractPdfContext, body: string) {
-  const doc = new PDFDocument({ margin: 44, size: 'A4', bufferPages: true })
+  const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true })
   const chunks: Buffer[] = []
 
   doc.on('data', (chunk: Buffer) => chunks.push(Buffer.from(chunk)))
 
-  doc.rect(0, 0, doc.page.width, 96).fill('#0f2742')
-  doc
-    .font('Helvetica-Bold')
-    .fontSize(9)
-    .fillColor('#9fd3ff')
-    .text(context.companyName, 44, 30, { width: 330 })
-  doc.font('Helvetica').fontSize(8).fillColor('#dce8f3').text(`RUC ${context.companyRuc}`, 44, 44)
-  doc
-    .font('Helvetica-Bold')
-    .fontSize(16)
-    .fillColor('#ffffff')
-    .text(context.title, 44, 60, { width: 420 })
-  doc
-    .roundedRect(doc.page.width - 176, 30, 132, 42, 6)
-    .fillAndStroke('#ffffff', '#ffffff')
-  doc
-    .font('Helvetica-Bold')
-    .fontSize(8)
-    .fillColor('#53667a')
-    .text('NRO. CONTRATO', doc.page.width - 164, 40, { width: 108, align: 'center' })
-  doc
-    .font('Helvetica-Bold')
-    .fontSize(11)
-    .fillColor('#0f2742')
-    .text(context.contractNumber, doc.page.width - 164, 53, { width: 108, align: 'center' })
-
-  doc.y = 122
-  resetPdfCursor(doc, 122)
-  drawSectionTitle(doc, 'Partes contratantes')
-  drawKeyValueGrid(doc, [
-    { label: 'Contratante', value: `${context.companyName} - RUC ${context.companyRuc}` },
-    { label: 'Proveedor', value: `${context.supplierName} - RUC ${context.supplierRuc}` },
+  drawContractHeader(doc, context)
+  drawLegalSectionTitle(doc, 'Partes contratantes')
+  drawLegalPairTable(doc, [
+    ['Contratante', context.companyName, 'RUC', context.companyRuc],
+    ['Proveedor', context.supplierName, 'RUC', context.supplierRuc],
   ])
 
   drawSectionTitle(doc, 'Resumen operativo y económico')
@@ -391,6 +488,7 @@ async function buildPdfBuffer(context: ContractPdfContext, body: string) {
 
   drawSectionTitle(doc, 'Equipos incluidos')
   drawEquipmentTable(doc, context.equipment)
+  drawContractIntro(doc, body)
 
   drawSectionTitle(doc, 'Cláusulas contractuales')
   drawClauses(doc, body)
@@ -407,7 +505,7 @@ async function buildPdfBuffer(context: ContractPdfContext, body: string) {
         `Contrato ${context.contractNumber} | Generado el ${context.issueDate} | Página ${i + 1} de ${range.count}`,
         doc.page.margins.left,
         doc.page.height - 30,
-        { align: 'center' },
+        { width: pdfContentWidth(doc), height: 10, align: 'center' },
       )
   }
   doc.end()
