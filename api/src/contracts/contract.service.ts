@@ -403,7 +403,22 @@ function getClauseBlocks(body: string) {
     current.text.push(line)
   }
 
-  return blocks
+  return blocks.filter((block) => {
+    const title = normalizeTextForComparison(block.title)
+    const text = normalizeTextForComparison(block.text.join(' '))
+    if (title.includes('OBSERVACIONES ESPECIALES') && (!text || text === 'SIN OBSERVACIONES REGISTRADAS.')) {
+      return false
+    }
+    return true
+  })
+}
+
+function normalizeTextForComparison(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase()
 }
 
 function drawClauses(doc: PDFKit.PDFDocument, body: string) {
@@ -433,12 +448,12 @@ function drawClauses(doc: PDFKit.PDFDocument, body: string) {
 }
 
 function drawSignatures(doc: PDFKit.PDFDocument, context: ContractPdfContext) {
-  ensurePdfSpace(doc, 110)
-  doc.moveDown(1)
+  ensurePdfSpace(doc, 150)
+  doc.moveDown(2.6)
   const startX = doc.page.margins.left
   const pageWidth = pdfContentWidth(doc)
   const boxWidth = (pageWidth - 28) / 2
-  const y = doc.y + 24
+  const y = doc.y + 34
 
   ;[
     { title: 'EL CONTRATANTE', name: context.companyName, ruc: `RUC ${context.companyRuc}` },
@@ -457,7 +472,7 @@ function drawSignatures(doc: PDFKit.PDFDocument, context: ContractPdfContext) {
     doc.text(party.ruc, x, y + 39, { width: boxWidth, align: 'center' })
   })
 
-  doc.y = y + 62
+  doc.y = y + 72
   resetPdfCursor(doc)
 }
 
@@ -1070,7 +1085,7 @@ export async function generateContractPdf(id: string, userId?: string) {
     currency: contract.currency,
     invoiceDueDays: String(contract.invoiceDueDays),
     equipmentList,
-    notes: contract.notes?.trim() || 'Sin observaciones registradas.',
+    notes: contract.notes?.trim() || '',
   })
 
   const pdf = await buildPdfBuffer(
