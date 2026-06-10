@@ -19,7 +19,7 @@ type CreateContractInput = z.infer<typeof createContractSchema>
 type UpdateContractInput = z.infer<typeof updateContractSchema>
 
 const SERVICE_ORDER_TEMPLATE_PATH = path.resolve(process.cwd(), 'src/templates/orden-servicio-template.xlsx')
-const SERVICE_ORDER_PRINT_AREA = 'C5:N65'
+const SERVICE_ORDER_PRINT_AREA = 'A1:N65'
 const execFileAsync = promisify(execFile)
 
 function parseDate(value: string) {
@@ -617,13 +617,25 @@ async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.readFile(SERVICE_ORDER_TEMPLATE_PATH)
   const worksheet = workbook.getWorksheet('OC 26.07') ?? workbook.worksheets[0]
+  keepOnlyServiceOrderWorksheet(workbook, worksheet)
 
   worksheet.pageSetup = {
     ...worksheet.pageSetup,
+    paperSize: 9,
     orientation: 'portrait',
     fitToPage: true,
     fitToWidth: 1,
     fitToHeight: 1,
+    horizontalCentered: true,
+    verticalCentered: true,
+    margins: {
+      left: 0.15,
+      right: 0.15,
+      top: 0.15,
+      bottom: 0.15,
+      header: 0,
+      footer: 0,
+    },
     printArea: SERVICE_ORDER_PRINT_AREA,
   }
   worksheet.getRow(18).height = 24
@@ -675,14 +687,32 @@ async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
 function keepOnlyServiceOrderPrintArea(worksheet: ExcelJS.Worksheet) {
   worksheet.spliceColumns(15, Math.max(0, worksheet.columnCount - 14))
   worksheet.spliceRows(66, Math.max(0, worksheet.rowCount - 65))
+  worksheet.views = [{ state: 'normal', showGridLines: false }]
   worksheet.pageSetup = {
     ...worksheet.pageSetup,
     printArea: SERVICE_ORDER_PRINT_AREA,
+    paperSize: 9,
     orientation: 'portrait',
     fitToPage: true,
     fitToWidth: 1,
     fitToHeight: 1,
+    horizontalCentered: true,
+    verticalCentered: true,
+    margins: {
+      left: 0.15,
+      right: 0.15,
+      top: 0.15,
+      bottom: 0.15,
+      header: 0,
+      footer: 0,
+    },
   }
+}
+
+function keepOnlyServiceOrderWorksheet(workbook: ExcelJS.Workbook, worksheet: ExcelJS.Worksheet) {
+  workbook.worksheets
+    .filter((sheet) => sheet.id !== worksheet.id)
+    .forEach((sheet) => workbook.removeWorksheet(sheet.id))
 }
 
 async function convertServiceOrderExcelToPdfBuffer(excelBuffer: Buffer) {
