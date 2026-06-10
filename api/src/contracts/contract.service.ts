@@ -49,14 +49,6 @@ export function serviceOrderDays(startDate: Date, endDate: Date) {
   return Math.max(1, Math.floor((end - start) / msPerDay) + 1)
 }
 
-function supplierShortName(value: string) {
-  return normalizeFolderName(value)
-    .split('-')
-    .filter((part) => !['SAC', 'S.A.C.', 'EIRL', 'E.I.R.L.', 'SRL', 'S.R.L.'].includes(part))
-    .slice(0, 2)
-    .join('-') || normalizeFolderName(value)
-}
-
 const units = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE']
 const teens = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE']
 const tens = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA']
@@ -575,10 +567,9 @@ function buildServiceOrderContext(contract: Awaited<ReturnType<typeof getContrac
   const subtotal = Math.round(quantity * unitPrice * 100) / 100
   const igv = Math.round(subtotal * 18) / 100
   const total = Math.round((subtotal + igv) * 100) / 100
-  const supplierCode = supplierShortName(contract.supplier.businessName)
 
   return {
-    orderNumber: `OS ${contract.contractNumber}/${supplierCode}`,
+    orderNumber: contract.contractNumber,
     supplierName: contract.supplier.businessName,
     supplierRuc: contract.supplier.ruc,
     supplierAddress: contract.supplier.address ?? '',
@@ -645,6 +636,7 @@ async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
     const cell = worksheet.getCell(address)
     cell.alignment = { ...cell.alignment, wrapText: true, vertical: 'middle' }
   })
+  worksheet.getCell('M11').alignment = { ...worksheet.getCell('M11').alignment, shrinkToFit: true, vertical: 'middle' }
 
   worksheet.getCell('E10').value = 'x'
   worksheet.getCell('E11').value = context.supplierName
@@ -721,9 +713,9 @@ async function convertServiceOrderExcelToPdfBuffer(excelBuffer: Buffer) {
   let lastError: unknown
   for (const command of pdfConverterCommands) {
     const convertToFormats = [
-      'pdf:calc_pdf_Export:{"SinglePageSheets":{"type":"boolean","value":"true"}}',
       'pdf:calc_pdf_Export',
       'pdf',
+      'pdf:calc_pdf_Export:{"SinglePageSheets":{"type":"boolean","value":"true"}}',
     ]
 
     for (const convertTo of convertToFormats) {
