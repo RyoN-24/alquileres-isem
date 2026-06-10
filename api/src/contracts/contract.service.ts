@@ -19,7 +19,7 @@ type CreateContractInput = z.infer<typeof createContractSchema>
 type UpdateContractInput = z.infer<typeof updateContractSchema>
 
 const SERVICE_ORDER_TEMPLATE_PATH = path.resolve(process.cwd(), 'src/templates/orden-servicio-template.xlsx')
-const SERVICE_ORDER_PRINT_AREA = 'A1:N65'
+const SERVICE_ORDER_PRINT_AREA = 'C5:N65'
 const execFileAsync = promisify(execFile)
 
 function parseDate(value: string) {
@@ -625,16 +625,14 @@ async function buildServiceOrderExcelBuffer(context: ServiceOrderContext) {
     orientation: 'portrait',
     fitToPage: true,
     fitToWidth: 1,
-    fitToHeight: 1,
-    horizontalCentered: true,
-    verticalCentered: true,
+    fitToHeight: 0,
     margins: {
-      left: 0.15,
-      right: 0.15,
-      top: 0.15,
-      bottom: 0.15,
-      header: 0,
-      footer: 0,
+      left: 0.26,
+      right: 0.22,
+      top: 0.5,
+      bottom: 0.44,
+      header: 0.3,
+      footer: 0.3,
     },
     printArea: SERVICE_ORDER_PRINT_AREA,
   }
@@ -695,16 +693,15 @@ function keepOnlyServiceOrderPrintArea(worksheet: ExcelJS.Worksheet) {
     orientation: 'portrait',
     fitToPage: true,
     fitToWidth: 1,
-    fitToHeight: 1,
-    horizontalCentered: true,
-    verticalCentered: true,
+    fitToHeight: 0,
+    scale: 65,
     margins: {
-      left: 0.15,
-      right: 0.15,
-      top: 0.15,
-      bottom: 0.15,
-      header: 0,
-      footer: 0,
+      left: 0.26,
+      right: 0.22,
+      top: 0.5,
+      bottom: 0.44,
+      header: 0.3,
+      footer: 0.3,
     },
   }
 }
@@ -723,15 +720,24 @@ async function convertServiceOrderExcelToPdfBuffer(excelBuffer: Buffer) {
 
   let lastError: unknown
   for (const command of pdfConverterCommands) {
-    try {
-      await execFileAsync(command, ['--headless', '--convert-to', 'pdf', '--outdir', tempDir, inputPath], {
-        timeout: 60000,
-      })
-      const pdf = await fs.readFile(outputPath)
-      await fs.rm(tempDir, { recursive: true, force: true })
-      return pdf
-    } catch (error) {
-      lastError = error
+    const convertToFormats = [
+      'pdf:calc_pdf_Export:{"SinglePageSheets":{"type":"boolean","value":"true"}}',
+      'pdf:calc_pdf_Export',
+      'pdf',
+    ]
+
+    for (const convertTo of convertToFormats) {
+      try {
+        await fs.rm(outputPath, { force: true })
+        await execFileAsync(command, ['--headless', '--convert-to', convertTo, '--outdir', tempDir, inputPath], {
+          timeout: 60000,
+        })
+        const pdf = await fs.readFile(outputPath)
+        await fs.rm(tempDir, { recursive: true, force: true })
+        return pdf
+      } catch (error) {
+        lastError = error
+      }
     }
   }
 
